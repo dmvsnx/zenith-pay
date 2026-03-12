@@ -19,7 +19,7 @@ func RateLimiter(max int, duration time.Duration) fiber.Handler {
 			return c.IP()
 		},
 		LimitReached: func(c *fiber.Ctx) error {
-			return helpers.ErrorResponse(c, fiber.StatusTooManyRequests, "Too many requests, please try again later")
+			return helpers.TooManyRequests(c, "Too many requests, please try again later")
 		},
 	})
 }

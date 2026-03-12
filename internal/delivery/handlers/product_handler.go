@@ -22,63 +22,63 @@ func NewProductHandler(productUsecase usecase.ProductUsecase) *ProductHandler {
 func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	var req dtos.ProductRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.productUsecase.CreateProduct(&req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusCreated, "Product created successfully", res)
+	return helpers.Created(c, "Product created successfully", res)
 }
 
 func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	res, err := h.productUsecase.GetProductByID(id)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Product retrieved successfully", res)
+	return helpers.Success(c, "Product retrieved successfully", res)
 }
 
 func (h *ProductHandler) ListProduct(c *fiber.Ctx) error {
 	res, err := h.productUsecase.ListProducts()
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Products retrieved successfully", res)
+	return helpers.Success(c, "Products retrieved successfully", res)
 }
 
 func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var req dtos.ProductUpdateRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	if err := h.productUsecase.UpdateProduct(id, &req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Product updated successfully", nil)
+	return helpers.Success(c, "Product updated successfully", nil)
 }
 
 func (h *ProductHandler) DeleteProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if err := h.productUsecase.DeleteProduct(id); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Product deleted successfully", nil)
+	return helpers.Success(c, "Product deleted successfully", nil)
 }

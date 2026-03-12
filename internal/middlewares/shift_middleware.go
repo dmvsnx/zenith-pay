@@ -14,7 +14,7 @@ func RequireActiveShift(repo repository.ShiftRepository) fiber.Handler {
 
 		shift, err := repo.FindActiveShiftByCashier(cashierUUID.String())
 		if err != nil || shift == nil {
-			return helpers.ErrorResponse(c, fiber.StatusUnauthorized, "No active shift")
+			return helpers.Unauthorized(c, "No active shift")
 		}
 
 		c.Locals("shiftID", shift.ID.String())

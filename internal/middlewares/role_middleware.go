@@ -10,12 +10,12 @@ func RoleMiddleware(allowedRoles ...model.Role) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		roleValue := c.Locals("role")
 		if roleValue == nil {
-			return helpers.ErrorResponse(c, fiber.StatusForbidden, "you don't have permission to access this resource")
+			return helpers.Forbidden(c, "you don't have permission to access this resource")
 		}
 
 		userRoleStr, ok := roleValue.(string)
 		if !ok {
-			return helpers.ErrorResponse(c, fiber.StatusForbidden, "you don't have permission to access this resource")
+			return helpers.Forbidden(c, "you don't have permission to access this resource")
 		}
 
 		userRole := model.Role(userRoleStr)
@@ -25,6 +25,6 @@ func RoleMiddleware(allowedRoles ...model.Role) fiber.Handler {
 			}
 		}
 
-		return helpers.ErrorResponse(c, fiber.StatusForbidden, "you don't have permission to access this resource")
+		return helpers.Forbidden(c, "you don't have permission to access this resource")
 	}
 }

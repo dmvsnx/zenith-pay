@@ -19,7 +19,7 @@ func MethodValidationMiddleware() fiber.Handler {
 		}
 
 		if !allowedMethods[c.Method()] {
-			return helpers.ErrorResponse(c, fiber.StatusMethodNotAllowed, "Method not allowed")
+			return helpers.MethodNotAllowed(c, "Method not allowed")
 		}
 
 		return c.Next()

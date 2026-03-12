@@ -22,38 +22,38 @@ func (h *ShiftHandler) OpenShift(c *fiber.Ctx) error {
 	cashierID := c.Locals("userID").(string)
 	var req dtos.OpenShiftRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.usecase.OpenShift(cashierID, req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Shift opened successfully", res)
+	return helpers.Success(c, "Shift opened successfully", res)
 }
 
 func (h *ShiftHandler) CloseShift(c *fiber.Ctx) error {
 	cashierID := c.Locals("userID").(string)
 	var req dtos.CloseShiftRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.usecase.CloseShift(cashierID, req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Shift closed successfully", res)
+	return helpers.Success(c, "Shift closed successfully", res)
 }
 
 func (h *ShiftHandler) GetActiveShift(c *fiber.Ctx) error {
@@ -61,8 +61,8 @@ func (h *ShiftHandler) GetActiveShift(c *fiber.Ctx) error {
 
 	res, err := h.usecase.GetActiveShift(cashierID)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Shift retrieved successfully", res)
+	return helpers.Success(c, "Shift retrieved successfully", res)
 }

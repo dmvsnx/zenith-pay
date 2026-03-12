@@ -22,35 +22,38 @@ func NewUserHandler(userUsecase usecase.UserUsecase) *UserHandler {
 func (h *UserHandler) Register(c *fiber.Ctx) error {
 	var req dtos.CreateUserRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.userUsecase.Register(&req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusCreated, "User registered successfully", res)
+	return helpers.Created(c, "User registered successfully", res)
 }
 
 func (h *UserHandler) Login(c *fiber.Ctx) error {
 	var req dtos.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.userUsecase.Login(&req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusUnauthorized, err.Error())
+		if err.Error() == "invalid username or password" {
+			return helpers.Unauthorized(c, err.Error())
+		}
+		return helpers.InternalServerError(c, "internal server error")
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Login successful", res)
+	return helpers.Success(c, "Login successful", res)
 }

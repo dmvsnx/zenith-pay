@@ -22,41 +22,41 @@ func NewTransactionHandler(tu usecase.TransactionUsecase) *TransactionHandler {
 func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 	var req dtos.TransactionRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	userID, ok := c.Locals("userID").(string)
 	if !ok || userID == "" {
-		return helpers.ErrorResponse(c, fiber.StatusUnauthorized, "Unauthorized")
+		return helpers.Unauthorized(c, "Unauthorized")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.transactionUsecase.CreateTransaction(userID, &req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusCreated, "Transaction created successfully", res)
+	return helpers.Created(c, "Transaction created successfully", res)
 }
 
 func (h *TransactionHandler) ListTransactions(c *fiber.Ctx) error {
 	res, err := h.transactionUsecase.GetAllTransaction()
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Transactions retrieved successfully", res)
+	return helpers.Success(c, "Transactions retrieved successfully", res)
 }
 
 func (h *TransactionHandler) GetTransactionByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	res, err := h.transactionUsecase.GetTransactionByID(id)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Transaction retrieved successfully", res)
+	return helpers.Success(c, "Transaction retrieved successfully", res)
 }

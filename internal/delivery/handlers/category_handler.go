@@ -22,28 +22,28 @@ func NewCategoryHandler(categoryUsecase usecase.CategoryUsecase) *CategoryHandle
 func (h *CategoryHandler) CreateCategory(c *fiber.Ctx) error {
 	var req dtos.CategoryRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.categoryUsecase.CreateCategory(&req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusCreated, "Category created successfully", res)
+	return helpers.Created(c, "Category created successfully", res)
 }
 
 func (h *CategoryHandler) ListCategories(c *fiber.Ctx) error {
 	res, err := h.categoryUsecase.ListCategories()
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Categories retrieved successfully", res)
+	return helpers.Success(c, "Categories retrieved successfully", res)
 }
 
 func (h *CategoryHandler) GetCategoryByID(c *fiber.Ctx) error {
@@ -51,37 +51,37 @@ func (h *CategoryHandler) GetCategoryByID(c *fiber.Ctx) error {
 
 	res, err := h.categoryUsecase.GetCategoryByID(id)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Category retrieved successfully", res)
+	return helpers.Success(c, "Category retrieved successfully", res)
 }
 
 func (h *CategoryHandler) UpdateCategory(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var req dtos.CategoryRequest
 	if err := c.BodyParser(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+		return helpers.BadRequest(c, "Invalid request body")
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
 	res, err := h.categoryUsecase.UpdateCategory(id, &req)
 	if err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Category updated successfully", res)
+	return helpers.Success(c, "Category updated successfully", res)
 }
 
 func (h *CategoryHandler) DeleteCategory(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	if err := h.categoryUsecase.DeleteCategory(id); err != nil {
-		return helpers.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.SuccessResponse(c, fiber.StatusOK, "Category deleted successfully", nil)
+	return helpers.Success(c, "Category deleted successfully", nil)
 }
