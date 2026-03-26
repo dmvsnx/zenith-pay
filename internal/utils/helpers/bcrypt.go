@@ -18,7 +18,7 @@ func NewBcryptHelper() BcryptHelper {
 }
 
 func (b *bcryptHelper) HashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), b.bcryptCost)
 	if err != nil {
 		return "", err
 	}
