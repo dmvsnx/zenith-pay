@@ -21,7 +21,7 @@ func reportRegisterRoutes(app fiber.Router, jwtService helpers.JWTService) {
 	reportRoutes := app.Group("/admin/reports",
 		middlewares.JWTMiddleware(jwtService),
 		middlewares.RoleMiddleware(model.AdminRole),
-		middlewares.RateLimiter(10, 1*time.Minute),
+		middlewares.RateLimiter(60, 1*time.Minute),
 	)
 
 	reportRoutes.Get("/daily", handler.GetDailyReport)
