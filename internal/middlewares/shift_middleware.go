@@ -9,15 +9,27 @@ import (
 
 func RequireActiveShift(repo repository.ShiftRepository) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		cashierID := c.Locals("userID").(string)
-		cashierUUID, _ := uuid.Parse(cashierID)
+		cashierID, ok := c.Locals("userID").(string)
+		if !ok {
+			return helpers.Unauthorized(c, "Unauthorized")
+		}
+
+		cashierUUID, err := uuid.Parse(cashierID)
+		if err != nil {
+			return helpers.Unauthorized(c, "Unauthorized")
+		}
 
 		shift, err := repo.FindActiveShiftByCashier(cashierUUID.String())
-		if err != nil || shift == nil {
-			return helpers.Unauthorized(c, "No active shift")
+		if err != nil {
+			return helpers.InternalServerError(c, "failed to check shift")
+		}
+
+		if shift == nil {
+			return helpers.Forbidden(c, "No active shift")
 		}
 
 		c.Locals("shiftID", shift.ID.String())
+
 		return c.Next()
 	}
 }

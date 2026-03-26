@@ -12,14 +12,17 @@ func RateLimiter(max int, duration time.Duration) fiber.Handler {
 	return limiter.New(limiter.Config{
 		Max: max,
 		Expiration: duration,
+
 		KeyGenerator: func(c *fiber.Ctx) string {
-			if userID := c.Locals("userID"); userID != nil {
-				return userID.(string)
+			if userID, ok := c.Locals("userID").(string); ok {
+				return userID
 			}
-			return c.IP()
+
+			return c.IP() + c.Get("User-Agent")
 		},
+
 		LimitReached: func(c *fiber.Ctx) error {
-			return helpers.TooManyRequests(c, "Too many requests, please try again later")
+			return helpers.TooManyRequests(c, "Too many requests, please try again later.")
 		},
 	})
 }
