@@ -13,7 +13,7 @@ import (
 type ProductUsecase interface {
 	CreateProduct(req *dtos.ProductRequest) (*dtos.ProductResponse, error)
 	GetProductByID(id string) (*dtos.ProductResponse, error)
-	ListProducts() ([]*dtos.ProductResponse, error)
+	ListProducts(page, limit int) ([]*dtos.ProductResponse, int64, error)
 	UpdateProduct(id string, req *dtos.ProductUpdateRequest) error
 	DeleteProduct(id string) error
 }
@@ -107,10 +107,10 @@ func (u *productUsecase) GetProductByID(id string) (*dtos.ProductResponse, error
 	return res, nil
 }
 
-func (u *productUsecase) ListProducts() ([]*dtos.ProductResponse, error) {
-	products, err := u.productRepo.FindAll()
+func (u *productUsecase) ListProducts(page, limit int) ([]*dtos.ProductResponse, int64, error) {
+	products, total, err := u.productRepo.FindAllPaginated((page-1)*limit, limit)
 	if err != nil {
-		return nil, errors.New("failed to retrieve products")
+		return nil, 0, errors.New("failed to retrieve products")
 	}
 
 	res := make([]*dtos.ProductResponse, 0, len(products))
@@ -118,7 +118,7 @@ func (u *productUsecase) ListProducts() ([]*dtos.ProductResponse, error) {
 	for _, product := range products {
 		category, err := u.categoryRepo.FindByID(product.CategoryID.String())
 		if err != nil || category == nil {
-			return nil, errors.New("category not found")
+			return nil, 0, errors.New("category not found")
 		}
 
 		res = append(res, &dtos.ProductResponse{
@@ -134,7 +134,7 @@ func (u *productUsecase) ListProducts() ([]*dtos.ProductResponse, error) {
 		})
 	}
 
-	return res, nil
+	return res, total, nil
 }
 
 func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest) error {

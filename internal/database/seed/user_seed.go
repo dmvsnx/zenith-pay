@@ -1,11 +1,11 @@
 package seed
 
 import (
-	"log"
 	"os"
 
 	"github.com/savanyv/zenith-pay/internal/model"
 	"github.com/savanyv/zenith-pay/internal/utils/helpers"
+	"github.com/savanyv/zenith-pay/internal/utils/logger"
 	"gorm.io/gorm"
 )
 
@@ -16,25 +16,25 @@ func SeedAdmin(db *gorm.DB, bc helpers.BcryptHelper) {
 	fullName := os.Getenv("ADMIN_FULL_NAME")
 
 	if username == "" || password == "" {
-		log.Println("ADMIN seed skipped (env not set)")
+		logger.Log.Info().Msg("ADMIN seed skipped (env not set)")
 		return
 	}
 
 	hashedPassword, err := bc.HashPassword(password)
 	if err != nil {
-		log.Printf("failed to hash password: %v", err)
+		logger.Log.Error().Err(err).Msg("failed to hash password")
 		return
 	}
 
 	var admin model.User
 	err = db.Where("username = ?", username).First(&admin).Error
 	if err == nil {
-		log.Println("ADMIN already exists, skipping seed")
+		logger.Log.Info().Msg("ADMIN already exists, skipping seed")
 		return
 	}
 
 	if err != gorm.ErrRecordNotFound {
-		log.Printf("Failed to check admin existence: %v", err)
+		logger.Log.Error().Err(err).Msg("Failed to check admin existence")
 		return
 	}
 
@@ -42,15 +42,15 @@ func SeedAdmin(db *gorm.DB, bc helpers.BcryptHelper) {
 		Username: username,
 		Password: hashedPassword,
 		FullName: fullName,
-		Email: email,
-		Role: model.AdminRole,
+		Email:    email,
+		Role:     model.AdminRole,
 		IsActive: true,
 	}
 
 	if err := db.Create(&admin).Error; err != nil {
-		log.Printf("failed to seed admin: %v", err)
+		logger.Log.Error().Err(err).Msg("failed to seed admin")
 		return
 	}
 
-	log.Println("ADMIN seeded successfully")
+	logger.Log.Info().Msg("ADMIN seeded successfully")
 }

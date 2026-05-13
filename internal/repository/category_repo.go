@@ -10,6 +10,7 @@ type CategoryRepository interface {
 	FindByName(name string) (*model.Category, error)
 	FindByID(id string) (*model.Category, error)
 	FindAll() ([]*model.Category, error)
+	FindAllPaginated(offset, limit int) ([]*model.Category, int64, error)
 	Update(category *model.Category) error
 	Delete(id string) error
 }
@@ -57,6 +58,21 @@ func (r *categoryRepository) FindAll() ([]*model.Category, error) {
 	}
 
 	return categories, nil
+}
+
+func (r *categoryRepository) FindAllPaginated(offset, limit int) ([]*model.Category, int64, error) {
+	var categories []*model.Category
+	var total int64
+
+	if err := r.db.Model(&model.Category{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.Offset(offset).Limit(limit).Find(&categories).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return categories, total, nil
 }
 
 func (r *categoryRepository) Update(category *model.Category) error {

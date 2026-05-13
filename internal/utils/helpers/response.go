@@ -53,3 +53,37 @@ func MethodNotAllowed(c *fiber.Ctx, message string) error {
 func Forbidden(c *fiber.Ctx, message string) error {
 	return JSON(c, fiber.StatusForbidden, "error", message, nil)
 }
+
+type PaginationMeta struct {
+	Total      int64 `json:"total"`
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
+	TotalPages int   `json:"total_pages"`
+}
+
+type PaginatedAPIResponse struct {
+	Code       int             `json:"code,omitempty"`
+	Status     string          `json:"status"`
+	Message    string          `json:"message"`
+	Pagination *PaginationMeta `json:"pagination"`
+	Data       interface{}     `json:"data,omitempty"`
+}
+
+func PaginatedSuccess(c *fiber.Ctx, message string, items interface{}, total int64, page, limit int) error {
+	totalPages := int(total) / limit
+	if int(total)%limit != 0 {
+		totalPages++
+	}
+	return c.Status(fiber.StatusOK).JSON(PaginatedAPIResponse{
+		Code:    fiber.StatusOK,
+		Status:  "success",
+		Message: message,
+		Pagination: &PaginationMeta{
+			Total:      total,
+			Page:       page,
+			Limit:      limit,
+			TotalPages: totalPages,
+		},
+		Data: items,
+	})
+}

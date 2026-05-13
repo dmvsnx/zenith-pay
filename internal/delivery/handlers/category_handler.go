@@ -38,12 +38,18 @@ func (h *CategoryHandler) CreateCategory(c *fiber.Ctx) error {
 }
 
 func (h *CategoryHandler) ListCategories(c *fiber.Ctx) error {
-	res, err := h.categoryUsecase.ListCategories()
+	p := dtos.PaginationRequest{
+		Page:  c.QueryInt("page", dtos.DefaultPage),
+		Limit: c.QueryInt("limit", dtos.DefaultLimit),
+	}
+	p.Normalize()
+
+	res, total, err := h.categoryUsecase.ListCategories(p.Page, p.Limit)
 	if err != nil {
 		return helpers.BadRequest(c, err.Error())
 	}
 
-	return helpers.Success(c, "Categories retrieved successfully", res)
+	return helpers.PaginatedSuccess(c, "Categories retrieved successfully", res, total, p.Page, p.Limit)
 }
 
 func (h *CategoryHandler) GetCategoryByID(c *fiber.Ctx) error {

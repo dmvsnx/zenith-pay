@@ -9,6 +9,8 @@ func RegisterRoutes(app fiber.Router) {
 	jwtService := helpers.NewJWTService()
 	bcrypt := helpers.NewBcryptHelper()
 
+	healthRegisterRoutes(app)
+
 	api := app.Group("/zenith-pay")
 
 	userRegisterRoutes(api, jwtService, bcrypt)

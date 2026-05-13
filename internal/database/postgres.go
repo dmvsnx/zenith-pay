@@ -2,18 +2,26 @@ package database
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/savanyv/zenith-pay/config"
 	"github.com/savanyv/zenith-pay/internal/model"
+	"github.com/savanyv/zenith-pay/internal/utils/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
+
+type gormLogWriter struct {
+	l zerolog.Logger
+}
+
+func (w *gormLogWriter) Printf(format string, args ...interface{}) {
+	w.l.Warn().Msg(fmt.Sprintf(format, args...))
+}
 
 func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
@@ -25,19 +33,18 @@ func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 		cfg.DBName,
 	)
 
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold: time.Second,
-			LogLevel: logger.Error,
+	gormLogger := gormlogger.New(
+		&gormLogWriter{l: logger.Log},
+		gormlogger.Config{
+			SlowThreshold:             time.Second,
+			LogLevel:                  gormlogger.Error,
 			IgnoreRecordNotFoundError: true,
-			Colorful: true,
+			Colorful:                  false,
 		},
 	)
 
-
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: newLogger,
+		Logger: gormLogger,
 	})
 	if err != nil {
 		return nil, err
@@ -52,11 +59,11 @@ func InitDatabase(cfg *config.Config) (*gorm.DB, error) {
 			&model.TransactionItems{},
 			&model.Shift{},
 		); err != nil {
-			log.Fatal(err)
+			logger.Log.Fatal().Err(err).Msg("Migration failed")
 		}
 	}
 
 	DB = db
-	log.Println("Database connected")
+	logger.Log.Info().Msg("Database connected")
 	return db, nil
 }

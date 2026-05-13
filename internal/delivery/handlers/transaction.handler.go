@@ -43,12 +43,18 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) ListTransactions(c *fiber.Ctx) error {
-	res, err := h.transactionUsecase.GetAllTransaction()
+	p := dtos.PaginationRequest{
+		Page:  c.QueryInt("page", dtos.DefaultPage),
+		Limit: c.QueryInt("limit", dtos.DefaultLimit),
+	}
+	p.Normalize()
+
+	res, total, err := h.transactionUsecase.GetAllTransaction(p.Page, p.Limit)
 	if err != nil {
 		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.Success(c, "Transactions retrieved successfully", res)
+	return helpers.PaginatedSuccess(c, "Transactions retrieved successfully", res, total, p.Page, p.Limit)
 }
 
 func (h *TransactionHandler) GetTransactionByID(c *fiber.Ctx) error {

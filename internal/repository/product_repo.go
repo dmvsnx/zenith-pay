@@ -12,6 +12,7 @@ type ProductRepository interface {
 	FindBySKU(sku string) (*model.Product, error)
 	FindByName(name string) (*model.Product, error)
 	FindAll() ([]*model.Product, error)
+	FindAllPaginated(offset, limit int) ([]*model.Product, int64, error)
 	Update(product *model.Product) error
 	Delete(id string) error
 	FindByIDForUpdate(tx *gorm.DB, id string) (*model.Product, error)
@@ -70,6 +71,21 @@ func (r *productRepository) FindAll() ([]*model.Product, error) {
 	}
 
 	return products, nil
+}
+
+func (r *productRepository) FindAllPaginated(offset, limit int) ([]*model.Product, int64, error) {
+	var products []*model.Product
+	var total int64
+
+	if err := r.db.Model(&model.Product{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.Preload("Category").Offset(offset).Limit(limit).Find(&products).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return products, total, nil
 }
 
 func (r *productRepository) Update(product *model.Product) error {
