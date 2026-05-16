@@ -36,4 +36,13 @@ func transactionRegisterRoutes(app fiber.Router, jwtService helpers.JWTService) 
 	transactionRoutes.Post("/", handler.CreateTransaction)
 	transactionRoutes.Get("/", handler.ListTransactions)
 	transactionRoutes.Get("/:id", handler.GetTransactionByID)
+
+	adminRoutes := app.Group(
+		"/admin/transactions",
+		middlewares.JWTMiddleware(jwtService),
+		middlewares.RoleMiddleware(model.AdminRole),
+		middlewares.RateLimiter(60, 1*time.Minute),
+	)
+	adminRoutes.Get("/", handler.ListTransactions)
+	adminRoutes.Get("/:id", handler.GetTransactionByID)
 }

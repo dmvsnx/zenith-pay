@@ -10,6 +10,9 @@ Backend API untuk sistem Point-of-Sale (POS) berbasis Go. Dibangun dengan arsite
 - **Transaksi POS** — Mendukung pembayaran tunai (cash), debit, dan QRIS; validasi stok dengan row-level locking; kalkulasi kembalian otomatis
 - **Laporan Penjualan** — Laporan harian dan bulanan dengan agregasi total transaksi dan revenue
 - **Rate Limiting** — Perlindungan endpoint dengan pembatasan request per menit
+- **Pagination** — List endpoint menggunakan pagination (page & limit query param)
+- **Logging Terstruktur** — Zerolog (console development, JSON production)
+- **Health Check** — Endpoint liveness (`/health`) dan readiness (`/health/ready`)
 
 ## Tech Stack 🛠️
 
@@ -22,6 +25,7 @@ Backend API untuk sistem Point-of-Sale (POS) berbasis Go. Dibangun dengan arsite
 | **JWT** (HS256) | Autentikasi token |
 | **godotenv** | Manajemen konfigurasi environment |
 | **go-playground/validator** | Validasi input |
+| **zerolog** | Structured logging (JSON production) |
 
 ## Arsitektur 🏗️
 
@@ -42,13 +46,14 @@ internal/
 ├── delivery/
 │   ├── handlers/         # HTTP handlers (user, category, product, transaction, shift, report)
 │   ├── routes/           # Route registrations & grup middleware
-├── dto/                  # Request/Response Data Transfer Objects
+├── dto/                  # Request/Response Data Transfer Objects (termasuk pagination DTO)
 ├── middlewares/          # CORS, JWT, role, rate-limiter, method validation, active shift
 ├── model/               # GORM models (User, Category, Product, Transaction, TransactionItem, Shift)
 ├── repository/          # Data access layer (interfaces + implementations)
 ├── usecase/             # Business logic layer (interfaces + implementations)
 └── utils/
     ├── helpers/         # Bcrypt, JWT, response helper, validator
+    ├── logger/          # Zerolog (console dev, JSON prod)
     └── sku.go           # Generator SKU produk
 ```
 
@@ -97,7 +102,16 @@ internal/
 
 ## API Endpoints 📡
 
-Semua endpoint diawali dengan prefix `/zenith-pay`.
+Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagination via query param `page` (default: 1) dan `limit` (default: 10).
+
+### Health Check
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| `GET` | `/health` | Liveness — uptime server |
+| `GET` | `/health/ready` | Readiness — koneksi database |
+
+### Autentikasi
 
 ### Autentikasi
 
@@ -131,13 +145,15 @@ Semua endpoint diawali dengan prefix `/zenith-pay`.
 | `PUT` | `/zenith-pay/products/admin/:id` | JWT + Admin (50/menit) | Update produk |
 | `DELETE` | `/zenith-pay/products/admin/:id` | JWT + Admin (50/menit) | Hapus produk |
 
-### Transaksi (Cashier Only)
+### Transaksi
 
 | Method | Endpoint | Middleware | Deskripsi |
 |--------|----------|------------|-----------|
-| `POST` | `/zenith-pay/transactions` | JWT + Cashier + Active Shift (30/menit) | Buat transaksi |
-| `GET` | `/zenith-pay/transactions` | JWT + Cashier + Active Shift (30/menit) | List transaksi |
-| `GET` | `/zenith-pay/transactions/:id` | JWT + Cashier + Active Shift (30/menit) | Detail transaksi |
+| `POST` | `/zenith-pay/transactions` | JWT + Cashier + Active Shift (30/menit) | Buat transaksi (cashier) |
+| `GET` | `/zenith-pay/transactions` | JWT + Cashier + Active Shift (30/menit) | List transaksi (cashier) |
+| `GET` | `/zenith-pay/transactions/:id` | JWT + Cashier + Active Shift (30/menit) | Detail transaksi (cashier) |
+| `GET` | `/zenith-pay/admin/transactions` | JWT + Admin (60/menit) | List semua transaksi (admin) |
+| `GET` | `/zenith-pay/admin/transactions/:id` | JWT + Admin (60/menit) | Detail transaksi (admin) |
 
 ### Shift (Cashier Only)
 
@@ -213,8 +229,11 @@ Semua endpoint diawali dengan prefix `/zenith-pay`.
 
 | Middleware | Deskripsi |
 |---|---|
+| **Recover** | Panic recovery — cegah crash server |
+| **Request ID** | Tambahkan `X-Request-ID` header otomatis |
 | **CORS** | Mengizinkan origin `localhost:3000` |
 | **Method Validation** | Whitelist HTTP method (GET, POST, PUT, PATCH, DELETE, OPTIONS) |
+| **HTTP Logger** | Log request/response (format: `[time] status - latency method path`) |
 | **JWT Auth** | Ekstrak & validasi Bearer token, set `userID`, `username`, `role`, `claims` di locals |
 | **Role-Based Access** | Batasi akses berdasarkan role (`admin` / `cashier`) |
 | **Rate Limiter** | Batasi request per endpoint (key berdasarkan `userID` atau IP + User-Agent) |
@@ -228,3 +247,4 @@ Semua endpoint diawali dengan prefix `/zenith-pay`.
 - Row-level locking (`FOR UPDATE`) pada transaksi untuk mencegah race condition stok
 - Validasi input menggunakan `go-playground/validator`
 - Secret key JWT melalui environment variable (tidak di-hardcode)
+- Zerolog structured logging (console development, JSON production)

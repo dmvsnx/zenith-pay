@@ -24,6 +24,10 @@ profile.cov
 go.work
 go.work.sum
 
+# Air live-reload artifacts
+tmp/
+build-errors.log
+
 # env file
 .env
 
