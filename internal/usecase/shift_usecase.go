@@ -17,12 +17,14 @@ type ShiftUsecase interface {
 }
 
 type shiftUsecase struct {
-	shiftRepo repository.ShiftRepository
+	shiftRepo       repository.ShiftRepository
+	transactionRepo repository.TransactionRepository
 }
 
-func NewShiftUsecase(sr repository.ShiftRepository) ShiftUsecase {
+func NewShiftUsecase(sr repository.ShiftRepository, tr repository.TransactionRepository) ShiftUsecase {
 	return &shiftUsecase{
-		shiftRepo: sr,
+		shiftRepo:       sr,
+		transactionRepo: tr,
 	}
 }
 
@@ -60,8 +62,14 @@ func (u *shiftUsecase) OpenShift(cashierID string, req dtos.OpenShiftRequest) (*
 }
 
 func (u *shiftUsecase) CloseShift(cashierID string, req dtos.CloseShiftRequest) (*dtos.ShiftResponse, error) {
-	cashierUUID, _ := uuid.Parse(cashierID)
-	shiftUUID, _ := uuid.Parse(req.ShiftID)
+	cashierUUID, err := uuid.Parse(cashierID)
+	if err != nil {
+		return nil, errors.New("invalid cashier id")
+	}
+	shiftUUID, err := uuid.Parse(req.ShiftID)
+	if err != nil {
+		return nil, errors.New("invalid shift id")
+	}
 
 	shift, err := u.shiftRepo.FindByID(shiftUUID.String())
 	if err != nil {
@@ -76,6 +84,14 @@ func (u *shiftUsecase) CloseShift(cashierID string, req dtos.CloseShiftRequest) 
 		return nil, errors.New("shift already closed")
 	}
 
+	totalCash, err := u.transactionRepo.SumCashByShiftID(shiftUUID.String())
+	if err != nil {
+		return nil, errors.New("failed to calculate expected closing balance")
+	}
+
+	expectedClosingBalance := shift.OpeningBalance + totalCash
+	variance := req.ClosingBalance - expectedClosingBalance
+
 	now := time.Now()
 	shift.Status = model.ShiftClose
 	shift.ClosingBalance = &req.ClosingBalance
@@ -86,20 +102,25 @@ func (u *shiftUsecase) CloseShift(cashierID string, req dtos.CloseShiftRequest) 
 	}
 
 	res := &dtos.ShiftResponse{
-		ID: shift.ID.String(),
-		CashierID: shift.CashierID.String(),
-		Status: string(shift.Status),
-		OpeningBalance: shift.OpeningBalance,
-		ClosingBalance: shift.ClosingBalance,
-		OpenedAt: shift.OpenedAt,
-		ClosedAt: &shift.ClosedAt,
+		ID:                     shift.ID.String(),
+		CashierID:              shift.CashierID.String(),
+		Status:                 string(shift.Status),
+		OpeningBalance:         shift.OpeningBalance,
+		ClosingBalance:         shift.ClosingBalance,
+		ExpectedClosingBalance: &expectedClosingBalance,
+		Variance:               &variance,
+		OpenedAt:               shift.OpenedAt,
+		ClosedAt:               &shift.ClosedAt,
 	}
 
 	return res, nil
 }
 
 func (u *shiftUsecase) GetActiveShift(cashierID string) (*dtos.ShiftResponse, error) {
-	cashierUUID, _ := uuid.Parse(cashierID)
+	cashierUUID, err := uuid.Parse(cashierID)
+	if err != nil {
+		return nil, errors.New("invalid cashier id")
+	}
 
 	shift, err := u.shiftRepo.FindActiveShiftByCashier(cashierUUID.String())
 	if err != nil {

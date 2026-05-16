@@ -17,6 +17,8 @@ type ShiftResponse struct {
 	Status          string     `json:"status"`
 	OpeningBalance  int64      `json:"opening_balance"`
 	ClosingBalance  *int64     `json:"closing_balance,omitempty"`
+	ExpectedClosingBalance *int64 `json:"expected_closing_balance,omitempty"`
+	Variance        *int64     `json:"variance,omitempty"`
 	OpenedAt        time.Time  `json:"opened_at"`
 	ClosedAt        *time.Time `json:"closed_at,omitempty"`
 }

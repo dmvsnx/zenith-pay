@@ -10,7 +10,7 @@ type TransactionItemRequest struct {
 }
 
 type TransactionRequest struct {
-	PaymentMethod string                   `json:"payment_method" validate:"required,oneof=cash card transfer"`
+	PaymentMethod string                   `json:"payment_method" validate:"required,oneof=cash debit qris"`
 	PaymentAmount int64                    `json:"payment_amount"`
 	Items         []TransactionItemRequest `json:"items" validate:"required,min=1,dive"`
 }

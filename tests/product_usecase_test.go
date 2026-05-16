@@ -164,6 +164,7 @@ func TestProductUsecase_GetProductByID_Success(t *testing.T) {
 			return &model.Product{
 				ID:         uuid.MustParse("00000000-0000-0000-0000-000000000011"),
 				CategoryID: catID,
+				Category:   model.Category{ID: catID, Name: "Food"},
 				Name:       "Burger",
 				Price:      25000,
 				Stock:      10,
@@ -172,11 +173,8 @@ func TestProductUsecase_GetProductByID_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	categoryRepo := &mocks.CategoryRepo{
-		FindByIDFn: func(id string) (*model.Category, error) {
-			return &model.Category{ID: catID, Name: "Food"}, nil
-		},
-	}
+	categoryRepo := &mocks.CategoryRepo{}
+
 	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
 
 	res, err := uc.GetProductByID("00000000-0000-0000-0000-000000000011")
@@ -204,46 +202,19 @@ func TestProductUsecase_GetProductByID_NotFound(t *testing.T) {
 	}
 }
 
-func TestProductUsecase_GetProductByID_CategoryNotFound(t *testing.T) {
-	catID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
-	productRepo := &mocks.ProductRepo{
-		FindByIDFn: func(id string) (*model.Product, error) {
-			return &model.Product{
-				ID:         uuid.MustParse("00000000-0000-0000-0000-000000000011"),
-				CategoryID: catID,
-			}, nil
-		},
-	}
-	categoryRepo := &mocks.CategoryRepo{
-		FindByIDFn: func(id string) (*model.Category, error) {
-			return nil, errors.New("not found")
-		},
-	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
-
-	_, err := uc.GetProductByID("00000000-0000-0000-0000-000000000011")
-
-	if err == nil || err.Error() != "category not found" {
-		t.Fatalf("expected category not found, got %v", err)
-	}
-}
-
 func TestProductUsecase_ListProducts_Success(t *testing.T) {
 	catID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
 	now := time.Now()
 	productRepo := &mocks.ProductRepo{
 		FindAllPaginatedFn: func(offset, limit int) ([]*model.Product, int64, error) {
 			return []*model.Product{
-				{ID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), CategoryID: catID, Name: "Burger", Price: 25000, Stock: 10, CreatedAt: now, UpdatedAt: now},
-				{ID: uuid.MustParse("00000000-0000-0000-0000-000000000012"), CategoryID: catID, Name: "Fries", Price: 15000, Stock: 20, CreatedAt: now, UpdatedAt: now},
+				{ID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), CategoryID: catID, Category: model.Category{ID: catID, Name: "Food"}, Name: "Burger", Price: 25000, Stock: 10, CreatedAt: now, UpdatedAt: now},
+				{ID: uuid.MustParse("00000000-0000-0000-0000-000000000012"), CategoryID: catID, Category: model.Category{ID: catID, Name: "Food"}, Name: "Fries", Price: 15000, Stock: 20, CreatedAt: now, UpdatedAt: now},
 			}, 2, nil
 		},
 	}
-	categoryRepo := &mocks.CategoryRepo{
-		FindByIDFn: func(id string) (*model.Category, error) {
-			return &model.Category{ID: catID, Name: "Food"}, nil
-		},
-	}
+	categoryRepo := &mocks.CategoryRepo{}
+
 	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
 
 	res, total, err := uc.ListProducts(1, 10)
@@ -274,40 +245,20 @@ func TestProductUsecase_ListProducts_FailFetch(t *testing.T) {
 	}
 }
 
-func TestProductUsecase_ListProducts_CategoryNotFound(t *testing.T) {
-	catID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
-	now := time.Now()
-	productRepo := &mocks.ProductRepo{
-		FindAllPaginatedFn: func(offset, limit int) ([]*model.Product, int64, error) {
-			return []*model.Product{
-				{ID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), CategoryID: catID, Name: "Burger", Price: 25000, Stock: 10, CreatedAt: now, UpdatedAt: now},
-			}, 1, nil
-		},
-	}
-	categoryRepo := &mocks.CategoryRepo{
-		FindByIDFn: func(id string) (*model.Category, error) {
-			return nil, errors.New("not found")
-		},
-	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
-
-	_, _, err := uc.ListProducts(1, 10)
-
-	if err == nil || err.Error() != "category not found" {
-		t.Fatalf("expected category not found, got %v", err)
-	}
-}
-
 func TestProductUsecase_UpdateProduct_Success(t *testing.T) {
 	catID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
+	now := time.Now()
 	productRepo := &mocks.ProductRepo{
 		FindByIDFn: func(id string) (*model.Product, error) {
 			return &model.Product{
 				ID:         uuid.MustParse("00000000-0000-0000-0000-000000000011"),
 				CategoryID: catID,
+				Category:   model.Category{ID: catID, Name: "Food"},
 				Name:       "Burger",
 				Price:      25000,
 				Stock:      10,
+				CreatedAt:  now,
+				UpdatedAt:  now,
 			}, nil
 		},
 		UpdateFn: func(product *model.Product) error {
@@ -315,17 +266,24 @@ func TestProductUsecase_UpdateProduct_Success(t *testing.T) {
 		},
 	}
 	categoryRepo := &mocks.CategoryRepo{}
+
 	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
 
 	newName := "Cheese Burger"
 	newPrice := int64(30000)
-	err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
+	res, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
 		Name:  &newName,
 		Price: &newPrice,
 	})
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
+	}
+	if res.Name != "Cheese Burger" {
+		t.Fatalf("expected Cheese Burger, got %s", res.Name)
+	}
+	if res.CategoryName != "Food" {
+		t.Fatalf("expected Food, got %s", res.CategoryName)
 	}
 }
 
@@ -338,7 +296,7 @@ func TestProductUsecase_UpdateProduct_NotFound(t *testing.T) {
 	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{})
 
 	newName := "Cheese Burger"
-	err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
+	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
 		Name: &newName,
 	})
 
@@ -360,7 +318,7 @@ func TestProductUsecase_UpdateProduct_InvalidCategoryID(t *testing.T) {
 	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{})
 
 	badID := "not-a-uuid"
-	err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
+	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
 		CategoryID: &badID,
 	})
 
@@ -387,7 +345,7 @@ func TestProductUsecase_UpdateProduct_CategoryNotFound(t *testing.T) {
 	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
 
 	newCatID := "00000000-0000-0000-0000-000000000099"
-	err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
+	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
 		CategoryID: &newCatID,
 	})
 
@@ -410,10 +368,15 @@ func TestProductUsecase_UpdateProduct_FailUpdate(t *testing.T) {
 			return errors.New("db error")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{})
+	categoryRepo := &mocks.CategoryRepo{
+		FindByIDFn: func(id string) (*model.Category, error) {
+			return &model.Category{ID: catID, Name: "Food"}, nil
+		},
+	}
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo)
 
 	newName := "Cheese Burger"
-	err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
+	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
 		Name: &newName,
 	})
 

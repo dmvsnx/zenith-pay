@@ -14,7 +14,7 @@ type ProductUsecase interface {
 	CreateProduct(req *dtos.ProductRequest) (*dtos.ProductResponse, error)
 	GetProductByID(id string) (*dtos.ProductResponse, error)
 	ListProducts(page, limit int) ([]*dtos.ProductResponse, int64, error)
-	UpdateProduct(id string, req *dtos.ProductUpdateRequest) error
+	UpdateProduct(id string, req *dtos.ProductUpdateRequest) (*dtos.ProductResponse, error)
 	DeleteProduct(id string) error
 }
 
@@ -87,15 +87,10 @@ func (u *productUsecase) GetProductByID(id string) (*dtos.ProductResponse, error
 		return nil, errors.New("product not found")
 	}
 
-	category, err := u.categoryRepo.FindByID(product.CategoryID.String())
-	if err != nil || category == nil {
-		return nil, errors.New("category not found")
-	}
-
 	res := &dtos.ProductResponse{
 		ID:         product.ID.String(),
 		CategoryID: product.CategoryID.String(),
-		CategoryName: category.Name,
+		CategoryName: product.Category.Name,
 		SKU:        product.SKU,
 		Name:       product.Name,
 		Price:      product.Price,
@@ -116,15 +111,10 @@ func (u *productUsecase) ListProducts(page, limit int) ([]*dtos.ProductResponse,
 	res := make([]*dtos.ProductResponse, 0, len(products))
 
 	for _, product := range products {
-		category, err := u.categoryRepo.FindByID(product.CategoryID.String())
-		if err != nil || category == nil {
-			return nil, 0, errors.New("category not found")
-		}
-
 		res = append(res, &dtos.ProductResponse{
 			ID:         product.ID.String(),
 			CategoryID: product.CategoryID.String(),
-			CategoryName: category.Name,
+			CategoryName: product.Category.Name,
 			SKU:        product.SKU,
 			Name:       product.Name,
 			Price:      product.Price,
@@ -137,22 +127,26 @@ func (u *productUsecase) ListProducts(page, limit int) ([]*dtos.ProductResponse,
 	return res, total, nil
 }
 
-func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest) error {
+func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest) (*dtos.ProductResponse, error) {
 	product, err := u.productRepo.FindByID(id)
 	if err != nil {
-		return errors.New("product not found")
+		return nil, errors.New("product not found")
 	}
 
+	var categoryName string
 	if req.CategoryID != nil {
 		if _, err := uuid.Parse(*req.CategoryID); err != nil {
-			return errors.New("invalid category ID")
+			return nil, errors.New("invalid category ID")
 		}
 
 		category, err := u.categoryRepo.FindByID(*req.CategoryID)
 		if err != nil {
-			return errors.New("category not found")
+			return nil, errors.New("category not found")
 		}
 		product.CategoryID = category.ID
+		categoryName = category.Name
+	} else {
+		categoryName = product.Category.Name
 	}
 
 	if req.Name != nil {
@@ -166,10 +160,22 @@ func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest
 	}
 
 	if err := u.productRepo.Update(product); err != nil {
-		return errors.New("failed to update product")
+		return nil, errors.New("failed to update product")
 	}
 
-	return nil
+	res := &dtos.ProductResponse{
+		ID:           product.ID.String(),
+		CategoryID:   product.CategoryID.String(),
+		CategoryName: categoryName,
+		SKU:          product.SKU,
+		Name:         product.Name,
+		Price:        product.Price,
+		Stock:        product.Stock,
+		CreatedAt:    product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:    product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return res, nil
 }
 
 func (u *productUsecase) DeleteProduct(id string) error {

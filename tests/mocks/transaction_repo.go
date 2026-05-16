@@ -10,6 +10,7 @@ type TransactionRepo struct {
 	FindByIDFn         func(id string) (*model.Transaction, error)
 	FindAllFn          func() ([]*model.Transaction, error)
 	FindAllPaginatedFn func(offset, limit int) ([]*model.Transaction, int64, error)
+	SumCashByShiftIDFn func(shiftID string) (int64, error)
 }
 
 func (m *TransactionRepo) Create(tx *gorm.DB, transaction *model.Transaction) error {
@@ -19,4 +20,7 @@ func (m *TransactionRepo) FindByID(id string) (*model.Transaction, error) { retu
 func (m *TransactionRepo) FindAll() ([]*model.Transaction, error)         { return m.FindAllFn() }
 func (m *TransactionRepo) FindAllPaginated(offset, limit int) ([]*model.Transaction, int64, error) {
 	return m.FindAllPaginatedFn(offset, limit)
+}
+func (m *TransactionRepo) SumCashByShiftID(shiftID string) (int64, error) {
+	return m.SumCashByShiftIDFn(shiftID)
 }

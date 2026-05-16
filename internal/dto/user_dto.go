@@ -1,11 +1,11 @@
 package dtos
 
 type CreateUserRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	FullName string `json:"full_name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Role     string `json:"role" binding:"required,oneof=admin cashier"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+	FullName string `json:"full_name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Role     string `json:"role" validate:"required,oneof=admin cashier"`
 }
 
 type CreateUserResponse struct {
@@ -18,8 +18,8 @@ type CreateUserResponse struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {

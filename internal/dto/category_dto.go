@@ -1,7 +1,7 @@
 package dtos
 
 type CategoryRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" validate:"required"`
 }
 
 type CategoryResponse struct {

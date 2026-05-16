@@ -10,6 +10,7 @@ type TransactionRepository interface {
 	FindByID(id string) (*model.Transaction, error)
 	FindAll() ([]*model.Transaction, error)
 	FindAllPaginated(offset, limit int) ([]*model.Transaction, int64, error)
+	SumCashByShiftID(shiftID string) (int64, error)
 }
 
 type transactionRepository struct {
@@ -58,4 +59,16 @@ func (r *transactionRepository) FindAllPaginated(offset, limit int) ([]*model.Tr
       }
 
       return transactions, total, nil
+}
+
+func (r *transactionRepository) SumCashByShiftID(shiftID string) (int64, error) {
+	var total int64
+	err := r.db.Model(&model.Transaction{}).
+		Where("shift_id = ? AND payment_method = ?", shiftID, model.Cash).
+		Select("COALESCE(SUM(total_amount), 0)").
+		Scan(&total).Error
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
 }

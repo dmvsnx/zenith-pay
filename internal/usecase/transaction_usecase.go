@@ -13,7 +13,7 @@ import (
 )
 
 type TransactionUsecase interface {
-	CreateTransaction(userID string, req *dtos.TransactionRequest) (*dtos.TransactionResponse, error)
+	CreateTransaction(userID, shiftID string, req *dtos.TransactionRequest) (*dtos.TransactionResponse, error)
 	GetTransactionByID(id string) (*dtos.TransactionResponse, error)
 	GetAllTransaction(page, limit int) ([]*dtos.TransactionResponse, int64, error)
 }
@@ -34,7 +34,7 @@ func NewTransactionUsecase(db *gorm.DB, tr repository.TransactionRepository, ir 
 	}
 }
 
-func (u *transactionUsecase) CreateTransaction(userID string, req *dtos.TransactionRequest) (*dtos.TransactionResponse, error) {
+func (u *transactionUsecase) CreateTransaction(userID, shiftID string, req *dtos.TransactionRequest) (*dtos.TransactionResponse, error) {
 	if len(req.Items) == 0 {
 		return nil, errors.New("transaction items cannot be empty")
 	}
@@ -105,8 +105,14 @@ func (u *transactionUsecase) CreateTransaction(userID string, req *dtos.Transact
 			changeAmount = 0
 		}
 
+		shiftUUID, err := uuid.Parse(shiftID)
+		if err != nil {
+			return errors.New("invalid shift ID")
+		}
+
 		transaction = model.Transaction{
 			UserID:          userUUID,
+			ShiftID:         shiftUUID,
 			TransactionDate: time.Now(),
 			PaymentMethod:   paymentMethod,
 			TotalAmount:     totalAmount,
@@ -184,14 +190,26 @@ func (u *transactionUsecase) GetAllTransaction(page, limit int) ([]*dtos.Transac
 
 	var responses []*dtos.TransactionResponse
 	for _, t := range transactions {
+		resItems := []dtos.TransactionItemResponse{}
+		for _, item := range t.TransactionItems {
+			resItems = append(resItems, dtos.TransactionItemResponse{
+				ProductID:    item.ProductID.String(),
+				ProductName:  item.ProductName,
+				ProductPrice: item.ProductPrice,
+				Quantity:     item.Quantity,
+				SubTotal:     item.Subtotal,
+			})
+		}
+
 		responses = append(responses, &dtos.TransactionResponse{
-			ID: t.ID.String(),
-			UserID: t.UserID.String(),
+			ID:              t.ID.String(),
+			UserID:          t.UserID.String(),
 			TransactionDate: t.TransactionDate,
-			PaymentMethod: string(t.PaymentMethod),
-			PaymentAmount: t.PaymentAmount,
-			TotalAmount: t.TotalAmount,
-			ChangeAmount: t.ChangeAmount,
+			PaymentMethod:   string(t.PaymentMethod),
+			PaymentAmount:   t.PaymentAmount,
+			TotalAmount:     t.TotalAmount,
+			ChangeAmount:    t.ChangeAmount,
+			Items:           resItems,
 		})
 	}
 

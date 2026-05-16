@@ -29,6 +29,9 @@ type Transaction struct {
 	UserID uuid.UUID `json:"user_id" gorm:"type:uuid;not null"`
 	User   User      `json:"user" gorm:"foreignKey:UserID;references:ID"`
 
+	ShiftID uuid.UUID `json:"shift_id" gorm:"type:uuid;not null"`
+	Shift   Shift     `json:"shift" gorm:"foreignKey:ShiftID;references:ID"`
+
 	TransactionDate time.Time     `json:"transaction_date" gorm:"not null"`
 	PaymentMethod   PaymentMethod `json:"payment_method" gorm:"type:varchar(20);not null"`
 

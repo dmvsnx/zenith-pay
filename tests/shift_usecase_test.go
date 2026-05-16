@@ -26,7 +26,7 @@ func TestShiftUsecase_OpenShift_Success(t *testing.T) {
 			return nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	res, err := uc.OpenShift(validCashierID, dtos.OpenShiftRequest{OpeningBalance: 100000})
 
@@ -40,7 +40,7 @@ func TestShiftUsecase_OpenShift_Success(t *testing.T) {
 
 func TestShiftUsecase_OpenShift_InvalidCashierID(t *testing.T) {
 	repo := &mocks.ShiftRepo{}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.OpenShift("not-a-uuid", dtos.OpenShiftRequest{OpeningBalance: 100000})
 
@@ -55,7 +55,7 @@ func TestShiftUsecase_OpenShift_AlreadyActive(t *testing.T) {
 			return &model.Shift{Status: model.ShiftOpen}, nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.OpenShift(validCashierID, dtos.OpenShiftRequest{OpeningBalance: 100000})
 
@@ -73,7 +73,7 @@ func TestShiftUsecase_OpenShift_FailCreate(t *testing.T) {
 			return errors.New("db error")
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.OpenShift(validCashierID, dtos.OpenShiftRequest{OpeningBalance: 100000})
 
@@ -83,31 +83,48 @@ func TestShiftUsecase_OpenShift_FailCreate(t *testing.T) {
 }
 
 func TestShiftUsecase_CloseShift_Success(t *testing.T) {
-	bal := int64(200000)
+	openingBalance := int64(100000)
+	cashTotal := int64(50000)
+	closingBalance := int64(150000)
+	expectedBal := openingBalance + cashTotal
+	variance := closingBalance - expectedBal
+
 	repo := &mocks.ShiftRepo{
 		FindByIDFn: func(id string) (*model.Shift, error) {
 			return &model.Shift{
-				ID:       uuid.MustParse(validShiftID),
-				CashierID: uuid.MustParse(validCashierID),
-				Status:   model.ShiftOpen,
+				ID:             uuid.MustParse(validShiftID),
+				CashierID:      uuid.MustParse(validCashierID),
+				Status:         model.ShiftOpen,
+				OpeningBalance: openingBalance,
 			}, nil
 		},
 		CloseShiftFn: func(shift *model.Shift) error {
 			return nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	transactionRepo := &mocks.TransactionRepo{
+		SumCashByShiftIDFn: func(shiftID string) (int64, error) {
+			return cashTotal, nil
+		},
+	}
+	uc := usecase.NewShiftUsecase(repo, transactionRepo)
 
 	res, err := uc.CloseShift(validCashierID, dtos.CloseShiftRequest{
 		ShiftID:        validShiftID,
-		ClosingBalance: 200000,
+		ClosingBalance: closingBalance,
 	})
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if *res.ClosingBalance != bal {
-		t.Fatalf("expected 200000, got %d", *res.ClosingBalance)
+	if *res.ClosingBalance != closingBalance {
+		t.Fatalf("expected %d, got %d", closingBalance, *res.ClosingBalance)
+	}
+	if *res.ExpectedClosingBalance != expectedBal {
+		t.Fatalf("expected expected closing balance %d, got %d", expectedBal, *res.ExpectedClosingBalance)
+	}
+	if *res.Variance != variance {
+		t.Fatalf("expected variance %d, got %d", variance, *res.Variance)
 	}
 }
 
@@ -117,7 +134,7 @@ func TestShiftUsecase_CloseShift_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.CloseShift(validCashierID, dtos.CloseShiftRequest{
 		ShiftID:        validShiftID,
@@ -140,7 +157,7 @@ func TestShiftUsecase_CloseShift_NotYourShift(t *testing.T) {
 			}, nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.CloseShift(validCashierID, dtos.CloseShiftRequest{
 		ShiftID:        validShiftID,
@@ -162,7 +179,7 @@ func TestShiftUsecase_CloseShift_AlreadyClosed(t *testing.T) {
 			}, nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.CloseShift(validCashierID, dtos.CloseShiftRequest{
 		ShiftID:        validShiftID,
@@ -184,7 +201,7 @@ func TestShiftUsecase_GetActiveShift_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	res, err := uc.GetActiveShift(validCashierID)
 
@@ -202,7 +219,7 @@ func TestShiftUsecase_GetActiveShift_NoActiveShift(t *testing.T) {
 			return nil, nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.GetActiveShift(validCashierID)
 
@@ -217,7 +234,7 @@ func TestShiftUsecase_GetActiveShift_DBError(t *testing.T) {
 			return nil, errors.New("db error")
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo)
+	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
 
 	_, err := uc.GetActiveShift(validCashierID)
 

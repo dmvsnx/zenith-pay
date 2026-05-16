@@ -14,8 +14,9 @@ import (
 )
 
 func shiftRegisterRoute(app fiber.Router, jwtService helpers.JWTService) {
-	repo := repository.NewShiftRepository(database.DB)
-	uc := usecase.NewShiftUsecase(repo)
+	shiftRepo := repository.NewShiftRepository(database.DB)
+	transactionRepo := repository.NewTransactionRepository(database.DB)
+	uc := usecase.NewShiftUsecase(shiftRepo, transactionRepo)
 	handler := handlers.NewShiftHandler(uc)
 
 	shiftRoutes := app.Group("/shifts", middlewares.JWTMiddleware(jwtService), middlewares.RoleMiddleware(model.CashierRole), middlewares.RateLimiter(10, 1*time.Minute))

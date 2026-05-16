@@ -30,11 +30,16 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 		return helpers.Unauthorized(c, "Unauthorized")
 	}
 
+	shiftID, ok := c.Locals("shiftID").(string)
+	if !ok || shiftID == "" {
+		return helpers.Forbidden(c, "No active shift")
+	}
+
 	if err := h.validator.Validate(&req); err != nil {
 		return helpers.BadRequest(c, err.Error())
 	}
 
-	res, err := h.transactionUsecase.CreateTransaction(userID, &req)
+	res, err := h.transactionUsecase.CreateTransaction(userID, shiftID, &req)
 	if err != nil {
 		return helpers.InternalServerError(c, err.Error())
 	}

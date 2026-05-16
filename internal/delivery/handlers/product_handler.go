@@ -73,11 +73,12 @@ func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 		return helpers.BadRequest(c, err.Error())
 	}
 
-	if err := h.productUsecase.UpdateProduct(id, &req); err != nil {
+	res, err := h.productUsecase.UpdateProduct(id, &req)
+	if err != nil {
 		return helpers.InternalServerError(c, err.Error())
 	}
 
-	return helpers.Success(c, "Product updated successfully", nil)
+	return helpers.Success(c, "Product updated successfully", res)
 }
 
 func (h *ProductHandler) DeleteProduct(c *fiber.Ctx) error {
