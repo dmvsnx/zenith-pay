@@ -134,13 +134,21 @@ func (u *shiftUsecase) GetActiveShift(cashierID string) (*dtos.ShiftResponse, er
 		return nil, errors.New("no active shift")
 	}
 
+	cashIncome, debitIncome, qrisIncome, err := u.transactionRepo.SumByShiftIDGrouped(shift.ID.String())
+	if err != nil {
+		return nil, err
+	}
+
 	res := &dtos.ShiftResponse{
-		ID: shift.ID.String(),
-		CashierID: shift.CashierID.String(),
-		Status: string(shift.Status),
+		ID:             shift.ID.String(),
+		CashierID:      shift.CashierID.String(),
+		Status:         string(shift.Status),
 		OpeningBalance: shift.OpeningBalance,
 		ClosingBalance: shift.ClosingBalance,
-		OpenedAt: shift.OpenedAt,
+		CashIncome:     &cashIncome,
+		DebitIncome:    &debitIncome,
+		QrisIncome:     &qrisIncome,
+		OpenedAt:       shift.OpenedAt,
 	}
 
 	return res, nil
