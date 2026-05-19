@@ -26,4 +26,5 @@ func reportRegisterRoutes(app fiber.Router, jwtService helpers.JWTService) {
 
 	reportRoutes.Get("/daily", handler.GetDailyReport)
 	reportRoutes.Get("/monthly", handler.GetMonthlyReport)
+	reportRoutes.Get("/revenue", handler.GetRevenueTrend)
 }

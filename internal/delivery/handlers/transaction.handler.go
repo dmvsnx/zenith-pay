@@ -53,8 +53,32 @@ func (h *TransactionHandler) ListTransactions(c *fiber.Ctx) error {
 		Limit: c.QueryInt("limit", dtos.DefaultLimit),
 	}
 	p.Normalize()
+	from := c.Query("from")
+	to := c.Query("to")
 
-	res, total, err := h.transactionUsecase.GetAllTransaction(p.Page, p.Limit)
+	res, total, err := h.transactionUsecase.GetAllTransaction(p.Page, p.Limit, from, to, nil)
+	if err != nil {
+		return helpers.InternalServerError(c, err.Error())
+	}
+
+	return helpers.PaginatedSuccess(c, "Transactions retrieved successfully", res, total, p.Page, p.Limit)
+}
+
+func (h *TransactionHandler) ListMyTransactions(c *fiber.Ctx) error {
+	p := dtos.PaginationRequest{
+		Page:  c.QueryInt("page", dtos.DefaultPage),
+		Limit: c.QueryInt("limit", dtos.DefaultLimit),
+	}
+	p.Normalize()
+	from := c.Query("from")
+	to := c.Query("to")
+
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return helpers.Unauthorized(c, "Unauthorized")
+	}
+
+	res, total, err := h.transactionUsecase.GetAllTransaction(p.Page, p.Limit, from, to, &userID)
 	if err != nil {
 		return helpers.InternalServerError(c, err.Error())
 	}
@@ -67,6 +91,25 @@ func (h *TransactionHandler) GetTransactionByID(c *fiber.Ctx) error {
 	res, err := h.transactionUsecase.GetTransactionByID(id)
 	if err != nil {
 		return helpers.InternalServerError(c, err.Error())
+	}
+
+	return helpers.Success(c, "Transaction retrieved successfully", res)
+}
+
+func (h *TransactionHandler) GetMyTransactionByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return helpers.Unauthorized(c, "Unauthorized")
+	}
+
+	res, err := h.transactionUsecase.GetTransactionByID(id)
+	if err != nil {
+		return helpers.InternalServerError(c, err.Error())
+	}
+
+	if res.UserID != userID {
+		return helpers.Forbidden(c, "Not your transaction")
 	}
 
 	return helpers.Success(c, "Transaction retrieved successfully", res)

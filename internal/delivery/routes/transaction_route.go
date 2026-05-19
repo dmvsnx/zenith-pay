@@ -30,12 +30,11 @@ func transactionRegisterRoutes(app fiber.Router, jwtService helpers.JWTService) 
 		"/transactions",
 		middlewares.JWTMiddleware(jwtService),
 		middlewares.RoleMiddleware(model.CashierRole),
-		middlewares.RequireActiveShift(shiftRepo),
 		middlewares.RateLimiter(30, 1*time.Minute),
 	)
-	transactionRoutes.Post("/", handler.CreateTransaction)
-	transactionRoutes.Get("/", handler.ListTransactions)
-	transactionRoutes.Get("/:id", handler.GetTransactionByID)
+	transactionRoutes.Post("/", middlewares.RequireActiveShift(shiftRepo), handler.CreateTransaction)
+	transactionRoutes.Get("/", handler.ListMyTransactions)
+	transactionRoutes.Get("/:id", handler.GetMyTransactionByID)
 
 	adminRoutes := app.Group(
 		"/admin/transactions",

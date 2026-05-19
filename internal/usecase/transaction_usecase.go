@@ -15,7 +15,7 @@ import (
 type TransactionUsecase interface {
 	CreateTransaction(userID, shiftID string, req *dtos.TransactionRequest) (*dtos.TransactionResponse, error)
 	GetTransactionByID(id string) (*dtos.TransactionResponse, error)
-	GetAllTransaction(page, limit int) ([]*dtos.TransactionResponse, int64, error)
+	GetAllTransaction(page, limit int, from, to string, userID *string) ([]*dtos.TransactionResponse, int64, error)
 }
 
 type transactionUsecase struct {
@@ -182,8 +182,8 @@ func (u *transactionUsecase) GetTransactionByID(id string) (*dtos.TransactionRes
 	return res, nil
 }
 
-func (u *transactionUsecase) GetAllTransaction(page, limit int) ([]*dtos.TransactionResponse, int64, error) {
-	transactions, total, err := u.transactionRepo.FindAllPaginated((page-1)*limit, limit)
+func (u *transactionUsecase) GetAllTransaction(page, limit int, from, to string, userID *string) ([]*dtos.TransactionResponse, int64, error) {
+	transactions, total, err := u.transactionRepo.FindAllPaginated((page-1)*limit, limit, from, to, userID)
 	if err != nil {
 		return nil, 0, err
 	}

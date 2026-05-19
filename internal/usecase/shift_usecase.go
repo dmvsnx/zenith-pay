@@ -84,12 +84,12 @@ func (u *shiftUsecase) CloseShift(cashierID string, req dtos.CloseShiftRequest) 
 		return nil, errors.New("shift already closed")
 	}
 
-	totalCash, err := u.transactionRepo.SumCashByShiftID(shiftUUID.String())
+	cashIncome, debitIncome, qrisIncome, err := u.transactionRepo.SumByShiftIDGrouped(shiftUUID.String())
 	if err != nil {
 		return nil, errors.New("failed to calculate expected closing balance")
 	}
 
-	expectedClosingBalance := shift.OpeningBalance + totalCash
+	expectedClosingBalance := shift.OpeningBalance + cashIncome
 	variance := req.ClosingBalance - expectedClosingBalance
 
 	now := time.Now()
@@ -109,6 +109,9 @@ func (u *shiftUsecase) CloseShift(cashierID string, req dtos.CloseShiftRequest) 
 		ClosingBalance:         shift.ClosingBalance,
 		ExpectedClosingBalance: &expectedClosingBalance,
 		Variance:               &variance,
+		CashIncome:             &cashIncome,
+		DebitIncome:            &debitIncome,
+		QrisIncome:             &qrisIncome,
 		OpenedAt:               shift.OpenedAt,
 		ClosedAt:               &shift.ClosedAt,
 	}

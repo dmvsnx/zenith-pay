@@ -111,7 +111,31 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 | `GET` | `/health` | Liveness — uptime server |
 | `GET` | `/health/ready` | Readiness — koneksi database |
 
-### Autentikasi
+#### Contoh Request & Response
+
+```json
+// GET /health
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "server is running",
+  "data": {
+    "uptime": "2h30m15s"
+  }
+}
+
+// GET /health/ready
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "database is connected",
+  "data": {
+    "database": "connected"
+  }
+}
+```
 
 ### Autentikasi
 
@@ -119,11 +143,86 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 |--------|----------|------------|-----------|
 | `POST` | `/zenith-pay/auth/login` | Rate limit (5/menit) | Login cashier/admin |
 
+#### Contoh Request & Response
+
+```json
+// POST /zenith-pay/auth/login
+// Request:
+{
+  "username": "kasir1",
+  "password": "secret123"
+}
+
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "login berhasil",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs..."
+  }
+}
+```
+
 ### Users (Admin Only)
 
 | Method | Endpoint | Middleware | Deskripsi |
 |--------|----------|------------|-----------|
+| `GET` | `/zenith-pay/admin/users` | JWT + Admin + Rate limit (20/menit) | List semua user |
 | `POST` | `/zenith-pay/admin/users` | JWT + Admin + Rate limit (20/menit) | Register user baru |
+
+#### Contoh Request & Response
+
+```json
+// POST /zenith-pay/admin/users
+// Request:
+{
+  "username": "kasir1",
+  "password": "secret123",
+  "full_name": "Kasir Satu",
+  "email": "kasir1@example.com",
+  "role": "cashier"
+}
+
+// Response:
+{
+  "code": 201,
+  "status": "success",
+  "message": "user berhasil dibuat",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "kasir1",
+    "full_name": "Kasir Satu",
+    "email": "kasir1@example.com",
+    "role": "cashier",
+    "is_active": true
+  }
+}
+
+// GET /zenith-pay/admin/users?page=1&limit=10
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "daftar user berhasil diambil",
+  "pagination": {
+    "total": 5,
+    "page": 1,
+    "limit": 10,
+    "total_pages": 1
+  },
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "kasir1",
+      "full_name": "Kasir Satu",
+      "email": "kasir1@example.com",
+      "role": "cashier",
+      "is_active": true
+    }
+  ]
+}
+```
 
 ### Kategori
 
@@ -135,6 +234,89 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 | `PUT` | `/zenith-pay/categories/admin/:id` | JWT + Admin (50/menit) | Update kategori |
 | `DELETE` | `/zenith-pay/categories/admin/:id` | JWT + Admin (50/menit) | Hapus kategori |
 
+#### Contoh Request & Response
+
+```json
+// POST /zenith-pay/categories/admin
+// Request:
+{
+  "name": "Makanan"
+}
+
+// Response:
+{
+  "code": 201,
+  "status": "success",
+  "message": "kategori berhasil dibuat",
+  "data": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "name": "Makanan"
+  }
+}
+
+// PUT /zenith-pay/categories/admin/:id
+// Request:
+{
+  "name": "Minuman"
+}
+
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "kategori berhasil diupdate",
+  "data": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "name": "Minuman"
+  }
+}
+
+// GET /zenith-pay/categories
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "daftar kategori berhasil diambil",
+  "pagination": {
+    "total": 5,
+    "page": 1,
+    "limit": 10,
+    "total_pages": 1
+  },
+  "data": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "name": "Makanan"
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440002",
+      "name": "Minuman"
+    }
+  ]
+}
+
+// GET /zenith-pay/categories/:id
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "detail kategori berhasil diambil",
+  "data": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "name": "Makanan"
+  }
+}
+
+// DELETE /zenith-pay/categories/admin/:id
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "kategori berhasil dihapus",
+  "data": null
+}
+```
+
 ### Produk
 
 | Method | Endpoint | Middleware | Deskripsi |
@@ -144,6 +326,118 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 | `POST` | `/zenith-pay/products/admin` | JWT + Admin (50/menit) | Buat produk |
 | `PUT` | `/zenith-pay/products/admin/:id` | JWT + Admin (50/menit) | Update produk |
 | `DELETE` | `/zenith-pay/products/admin/:id` | JWT + Admin (50/menit) | Hapus produk |
+
+#### Contoh Request & Response
+
+```json
+// POST /zenith-pay/products/admin
+// Request:
+{
+  "category_id": "660e8400-e29b-41d4-a716-446655440001",
+  "sku": "",
+  "name": "Nasi Goreng",
+  "price": 15000,
+  "stock": 50
+}
+
+// Response:
+{
+  "code": 201,
+  "status": "success",
+  "message": "produk berhasil dibuat",
+  "data": {
+    "id": "770e8400-e29b-41d4-a716-446655440003",
+    "category_id": "660e8400-e29b-41d4-a716-446655440001",
+    "category_name": "Makanan",
+    "sku": "SKU-20260520-00001",
+    "name": "Nasi Goreng",
+    "price": 15000,
+    "stock": 50,
+    "created_at": "2026-05-20T08:00:00Z",
+    "updated_at": "2026-05-20T08:00:00Z"
+  }
+}
+
+// PUT /zenith-pay/products/admin/:id
+// Request:
+{
+  "name": "Nasi Goreng Spesial",
+  "price": 18000
+}
+
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "produk berhasil diupdate",
+  "data": {
+    "id": "770e8400-e29b-41d4-a716-446655440003",
+    "category_id": "660e8400-e29b-41d4-a716-446655440001",
+    "category_name": "Makanan",
+    "sku": "SKU-20260520-00001",
+    "name": "Nasi Goreng Spesial",
+    "price": 18000,
+    "stock": 50,
+    "created_at": "2026-05-20T08:00:00Z",
+    "updated_at": "2026-05-20T08:05:00Z"
+  }
+}
+
+// GET /zenith-pay/products?page=1&limit=10
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "daftar produk berhasil diambil",
+  "pagination": {
+    "total": 10,
+    "page": 1,
+    "limit": 10,
+    "total_pages": 1
+  },
+  "data": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440003",
+      "category_id": "660e8400-e29b-41d4-a716-446655440001",
+      "category_name": "Makanan",
+      "sku": "SKU-20260520-00001",
+      "name": "Nasi Goreng",
+      "price": 15000,
+      "stock": 50,
+      "created_at": "2026-05-20T08:00:00Z",
+      "updated_at": "2026-05-20T08:00:00Z"
+    }
+  ]
+}
+
+// GET /zenith-pay/products/:id
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "detail produk berhasil diambil",
+  "data": {
+    "id": "770e8400-e29b-41d4-a716-446655440003",
+    "category_id": "660e8400-e29b-41d4-a716-446655440001",
+    "category_name": "Makanan",
+    "sku": "SKU-20260520-00001",
+    "name": "Nasi Goreng",
+    "price": 15000,
+    "stock": 50,
+    "created_at": "2026-05-20T08:00:00Z",
+    "updated_at": "2026-05-20T08:00:00Z"
+  }
+}
+
+// DELETE /zenith-pay/products/admin/:id
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "produk berhasil dihapus",
+  "data": null
+}
+```
 
 ### Transaksi
 
@@ -155,6 +449,122 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 | `GET` | `/zenith-pay/admin/transactions` | JWT + Admin (60/menit) | List semua transaksi (admin) |
 | `GET` | `/zenith-pay/admin/transactions/:id` | JWT + Admin (60/menit) | Detail transaksi (admin) |
 
+#### Contoh Request & Response
+
+```json
+// POST /zenith-pay/transactions
+// Request:
+{
+  "payment_method": "cash",
+  "payment_amount": 50000,
+  "items": [
+    { "product_id": "770e8400-e29b-41d4-a716-446655440003", "quantity": 2 },
+    { "product_id": "770e8400-e29b-41d4-a716-446655440004", "quantity": 1 }
+  ]
+}
+
+// Response:
+{
+  "code": 201,
+  "status": "success",
+  "message": "transaksi berhasil",
+  "data": {
+    "id": "880e8400-e29b-41d4-a716-446655440005",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "transaction_date": "2026-05-20T10:30:00Z",
+    "payment_method": "cash",
+    "total_amount": 35000,
+    "payment_amount": 50000,
+    "change_amount": 15000,
+    "items": [
+      {
+        "product_id": "770e8400-e29b-41d4-a716-446655440003",
+        "product_name": "Nasi Goreng",
+        "product_price": 15000,
+        "quantity": 2,
+        "sub_total": 30000
+      },
+      {
+        "product_id": "770e8400-e29b-41d4-a716-446655440004",
+        "product_name": "Es Teh",
+        "product_price": 5000,
+        "quantity": 1,
+        "sub_total": 5000
+      }
+    ]
+  }
+}
+
+// GET /zenith-pay/transactions?page=1&limit=10&from=2026-05-01&to=2026-05-20
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "daftar transaksi berhasil diambil",
+  "pagination": {
+    "total": 25,
+    "page": 1,
+    "limit": 10,
+    "total_pages": 3
+  },
+  "data": [
+    {
+      "id": "880e8400-e29b-41d4-a716-446655440005",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "transaction_date": "2026-05-20T10:30:00Z",
+      "payment_method": "cash",
+      "total_amount": 35000,
+      "payment_amount": 50000,
+      "change_amount": 15000,
+      "items": [
+        {
+          "product_id": "770e8400-e29b-41d4-a716-446655440003",
+          "product_name": "Nasi Goreng",
+          "product_price": 15000,
+          "quantity": 2,
+          "sub_total": 30000
+        }
+      ]
+    }
+  ]
+}
+
+// GET /zenith-pay/transactions/:id
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "detail transaksi berhasil diambil",
+  "data": {
+    "id": "880e8400-e29b-41d4-a716-446655440005",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "transaction_date": "2026-05-20T10:30:00Z",
+    "payment_method": "cash",
+    "total_amount": 35000,
+    "payment_amount": 50000,
+    "change_amount": 15000,
+    "items": [
+      {
+        "product_id": "770e8400-e29b-41d4-a716-446655440003",
+        "product_name": "Nasi Goreng",
+        "product_price": 15000,
+        "quantity": 2,
+        "sub_total": 30000
+      },
+      {
+        "product_id": "770e8400-e29b-41d4-a716-446655440004",
+        "product_name": "Es Teh",
+        "product_price": 5000,
+        "quantity": 1,
+        "sub_total": 5000
+      }
+    ]
+  }
+}
+```
+
+> **Catatan:** Endpoint `GET /zenith-pay/admin/transactions` dan `GET /zenith-pay/admin/transactions/:id` memiliki response yang sama seperti di atas, hanya saja akses admin dan tidak terbatas pada transaksi milik cashier tertentu.
+
 ### Shift (Cashier Only)
 
 | Method | Endpoint | Middleware | Deskripsi |
@@ -163,12 +573,137 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 | `POST` | `/zenith-pay/shifts/close` | JWT + Cashier (10/menit) | Tutup shift |
 | `GET` | `/zenith-pay/shifts/active` | JWT + Cashier (10/menit) | Cek shift aktif |
 
+#### Contoh Request & Response
+
+```json
+// POST /zenith-pay/shifts/open
+// Request:
+{
+  "opening_balance": 1000000
+}
+
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "shift berhasil dibuka",
+  "data": {
+    "id": "990e8400-e29b-41d4-a716-446655440006",
+    "cashier_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "open",
+    "opening_balance": 1000000,
+    "closing_balance": null,
+    "expected_closing_balance": null,
+    "variance": null,
+    "cash_income": null,
+    "debit_income": null,
+    "qris_income": null,
+    "opened_at": "2026-05-20T08:00:00Z",
+    "closed_at": null
+  }
+}
+
+// POST /zenith-pay/shifts/close
+// Request:
+{
+  "shift_id": "990e8400-e29b-41d4-a716-446655440006",
+  "closing_balance": 1178000
+}
+
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "shift berhasil ditutup",
+  "data": {
+    "id": "990e8400-e29b-41d4-a716-446655440006",
+    "cashier_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "closed",
+    "opening_balance": 1000000,
+    "closing_balance": 1178000,
+    "expected_closing_balance": 1178000,
+    "variance": 0,
+    "cash_income": 178000,
+    "debit_income": 0,
+    "qris_income": 0,
+    "opened_at": "2026-05-20T08:00:00Z",
+    "closed_at": "2026-05-20T17:00:00Z"
+  }
+}
+
+// GET /zenith-pay/shifts/active
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "shift aktif berhasil diambil",
+  "data": {
+    "id": "990e8400-e29b-41d4-a716-446655440006",
+    "cashier_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "open",
+    "opening_balance": 1000000,
+    "closing_balance": null,
+    "expected_closing_balance": null,
+    "variance": null,
+    "cash_income": null,
+    "debit_income": null,
+    "qris_income": null,
+    "opened_at": "2026-05-20T08:00:00Z",
+    "closed_at": null
+  }
+}
+```
+
 ### Laporan (Admin Only)
 
 | Method | Endpoint | Middleware | Deskripsi |
 |--------|----------|------------|-----------|
 | `GET` | `/zenith-pay/admin/reports/daily?date=YYYY-MM-DD` | JWT + Admin (60/menit) | Laporan harian |
 | `GET` | `/zenith-pay/admin/reports/monthly?period=YYYY-MM` | JWT + Admin (60/menit) | Laporan bulanan |
+| `GET` | `/zenith-pay/admin/reports/revenue?from=YYYY-MM-DD&to=YYYY-MM-DD` | JWT + Admin (60/menit) | Tren revenue |
+
+#### Contoh Request & Response
+
+```json
+// GET /zenith-pay/admin/reports/daily?date=2026-05-20
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "laporan harian berhasil diambil",
+  "data": {
+    "date": "2026-05-20",
+    "total_transactions": 25,
+    "total_revenue": 875000
+  }
+}
+
+// GET /zenith-pay/admin/reports/monthly?period=2026-05
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "laporan bulanan berhasil diambil",
+  "data": {
+    "month": "2026-05",
+    "total_transactions": 450,
+    "total_revenue": 15750000
+  }
+}
+
+// GET /zenith-pay/admin/reports/revenue?from=2026-05-01&to=2026-05-20
+// Response:
+{
+  "code": 200,
+  "status": "success",
+  "message": "tren revenue berhasil diambil",
+  "data": [
+    { "date": "2026-05-01", "total_revenue": 750000 },
+    { "date": "2026-05-02", "total_revenue": 820000 },
+    { "date": "2026-05-20", "total_revenue": 875000 }
+  ]
+}
+```
 
 ## Model Database 📦
 
@@ -199,6 +734,7 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 ### Transaction
 - `id` (UUID, PK)
 - `user_id` (UUID, FK → users)
+- `shift_id` (UUID, FK → shifts)
 - `transaction_date` (timestamp)
 - `payment_method` (enum: `cash` / `debit` / `qris`)
 - `total_amount` (int64)
@@ -222,6 +758,11 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
 - `status` (enum: `open` / `closed`)
 - `opening_balance` (int64)
 - `closing_balance` (int64, nullable)
+- `expected_closing_balance` (int64, nullable)
+- `variance` (int64, nullable)
+- `cash_income` (int64, nullable)
+- `debit_income` (int64, nullable)
+- `qris_income` (int64, nullable)
 - `opened_at` (timestamp)
 - `closed_at` (timestamp, nullable)
 

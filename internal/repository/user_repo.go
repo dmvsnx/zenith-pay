@@ -8,6 +8,7 @@ import (
 type UserRespository interface {
 	Create(user *model.User) error
 	GetByUsername(username string) (*model.User, error)
+	FindAllPaginated(offset, limit int) ([]*model.User, int64, error)
 }
 
 type userRepository struct {
@@ -37,4 +38,20 @@ func (r *userRepository) GetByUsername(username string) (*model.User, error) {
 	}
 
 	return &user, nil
+}
+
+// FindAllPaginated retrieves users with pagination
+func (r *userRepository) FindAllPaginated(offset, limit int) ([]*model.User, int64, error) {
+	var users []*model.User
+	var total int64
+
+	if err := r.db.Model(&model.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.Select("id, username, full_name, email, role, is_active, created_at, updated_at").Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }

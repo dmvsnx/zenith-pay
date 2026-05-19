@@ -11,6 +11,7 @@ import (
 type ReportUsecase interface {
 	GetDailyReport(date string) (*dtos.DailyReportResponse, error)
 	GetMonthlyReport(month string) (*dtos.MonthlyReportResponse, error)
+	GetRevenueTrend(from, to string) ([]*dtos.RevenueTrendItem, error)
 }
 
 type reportUsecase struct {
@@ -43,6 +44,38 @@ func (u *reportUsecase) GetDailyReport(date string) (*dtos.DailyReportResponse, 
 		Date: start.Format("2006-01-02"),
 		TotalTransactions: summary.TotalTransactions,
 		TotalRevenue: summary.TotalRevenue,
+	}
+
+	return res, nil
+}
+
+func (u *reportUsecase) GetRevenueTrend(from, to string) ([]*dtos.RevenueTrendItem, error) {
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+
+	fromDate, err := time.ParseInLocation("2006-01-02", from, loc)
+	if err != nil {
+		return nil, errors.New("invalid from date format(YYYY-MM-DD)")
+	}
+
+	toDate, err := time.ParseInLocation("2006-01-02", to, loc)
+	if err != nil {
+		return nil, errors.New("invalid to date format(YYYY-MM-DD)")
+	}
+
+	start := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, loc)
+	end := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 23, 59, 59, 999999999, loc)
+
+	rows, err := u.reportRepo.GetDailySalesInRange(start, end)
+	if err != nil {
+		return nil, errors.New("failed to fetch revenue trend")
+	}
+
+	var res []*dtos.RevenueTrendItem
+	for _, row := range rows {
+		res = append(res, &dtos.RevenueTrendItem{
+			Date:         row.Date,
+			TotalRevenue: row.TotalRevenue,
+		})
 	}
 
 	return res, nil

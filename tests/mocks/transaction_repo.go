@@ -6,11 +6,11 @@ import (
 )
 
 type TransactionRepo struct {
-	CreateFn           func(tx *gorm.DB, transaction *model.Transaction) error
-	FindByIDFn         func(id string) (*model.Transaction, error)
-	FindAllFn          func() ([]*model.Transaction, error)
-	FindAllPaginatedFn func(offset, limit int) ([]*model.Transaction, int64, error)
-	SumCashByShiftIDFn func(shiftID string) (int64, error)
+	CreateFn             func(tx *gorm.DB, transaction *model.Transaction) error
+	FindByIDFn           func(id string) (*model.Transaction, error)
+	FindAllFn            func() ([]*model.Transaction, error)
+	FindAllPaginatedFn   func(offset, limit int, from, to string, userID *string) ([]*model.Transaction, int64, error)
+	SumByShiftIDGroupedFn func(shiftID string) (cash, debit, qris int64, err error)
 }
 
 func (m *TransactionRepo) Create(tx *gorm.DB, transaction *model.Transaction) error {
@@ -18,9 +18,9 @@ func (m *TransactionRepo) Create(tx *gorm.DB, transaction *model.Transaction) er
 }
 func (m *TransactionRepo) FindByID(id string) (*model.Transaction, error) { return m.FindByIDFn(id) }
 func (m *TransactionRepo) FindAll() ([]*model.Transaction, error)         { return m.FindAllFn() }
-func (m *TransactionRepo) FindAllPaginated(offset, limit int) ([]*model.Transaction, int64, error) {
-	return m.FindAllPaginatedFn(offset, limit)
+func (m *TransactionRepo) FindAllPaginated(offset, limit int, from, to string, userID *string) ([]*model.Transaction, int64, error) {
+	return m.FindAllPaginatedFn(offset, limit, from, to, userID)
 }
-func (m *TransactionRepo) SumCashByShiftID(shiftID string) (int64, error) {
-	return m.SumCashByShiftIDFn(shiftID)
+func (m *TransactionRepo) SumByShiftIDGrouped(shiftID string) (cash, debit, qris int64, err error) {
+	return m.SumByShiftIDGroupedFn(shiftID)
 }

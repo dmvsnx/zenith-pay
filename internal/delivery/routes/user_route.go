@@ -22,5 +22,6 @@ func userRegisterRoutes(app fiber.Router, jwtService helpers.JWTService, bcrypt 
 	auth.Post("/login", middlewares.RateLimiter(5, 1*time.Minute),handler.Login)
 
 	admin := app.Group("/admin/users", middlewares.JWTMiddleware(jwtService), middlewares.RoleMiddleware(model.AdminRole), middlewares.RateLimiter(20, 1*time.Minute))
+	admin.Get("/", handler.ListUsers)
 	admin.Post("/", handler.Register)
 }

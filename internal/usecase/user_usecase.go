@@ -12,6 +12,7 @@ import (
 type UserUsecase interface {
 	Register(req *dtos.CreateUserRequest) (*dtos.CreateUserResponse, error)
 	Login(req *dtos.LoginRequest) (*dtos.LoginResponse, error)
+	ListUsers(page, limit int) ([]*dtos.UserResponse, int64, error)
 }
 
 type userUsecase struct {
@@ -67,6 +68,28 @@ func (u *userUsecase) Register(req *dtos.CreateUserRequest) (*dtos.CreateUserRes
 	}
 
 	return res, nil
+}
+
+func (u *userUsecase) ListUsers(page, limit int) ([]*dtos.UserResponse, int64, error) {
+	offset := (page - 1) * limit
+	users, total, err := u.userRepo.FindAllPaginated(offset, limit)
+	if err != nil {
+		return nil, 0, errors.New("failed to fetch users")
+	}
+
+	var res []*dtos.UserResponse
+	for _, user := range users {
+		res = append(res, &dtos.UserResponse{
+			ID:       user.ID.String(),
+			Username: user.Username,
+			FullName: user.FullName,
+			Email:    user.Email,
+			Role:     string(user.Role),
+			IsActive: user.IsActive,
+		})
+	}
+
+	return res, total, nil
 }
 
 func (u *userUsecase) Login(req *dtos.LoginRequest) (*dtos.LoginResponse, error) {

@@ -11,3 +11,8 @@ type MonthlyReportResponse struct {
 	TotalTransactions int64 `json:"total_transactions"`
 	TotalRevenue float64 `json:"total_revenue"`
 }
+
+type RevenueTrendItem struct {
+	Date         string  `json:"date"`
+	TotalRevenue float64 `json:"total_revenue"`
+}

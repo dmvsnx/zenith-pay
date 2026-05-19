@@ -37,6 +37,21 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	return helpers.Created(c, "User registered successfully", res)
 }
 
+func (h *UserHandler) ListUsers(c *fiber.Ctx) error {
+	p := dtos.PaginationRequest{
+		Page:  c.QueryInt("page", dtos.DefaultPage),
+		Limit: c.QueryInt("limit", dtos.DefaultLimit),
+	}
+	p.Normalize()
+
+	res, total, err := h.userUsecase.ListUsers(p.Page, p.Limit)
+	if err != nil {
+		return helpers.BadRequest(c, err.Error())
+	}
+
+	return helpers.PaginatedSuccess(c, "Users retrieved successfully", res, total, p.Page, p.Limit)
+}
+
 func (h *UserHandler) Login(c *fiber.Ctx) error {
 	var req dtos.LoginRequest
 	if err := c.BodyParser(&req); err != nil {

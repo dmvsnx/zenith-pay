@@ -36,6 +36,30 @@ func (h *ReportHandler) GetDailyReport(c *fiber.Ctx) error {
 	return helpers.Success(c, "Daily report retrieved successfully", res)
 }
 
+func (h *ReportHandler) GetRevenueTrend(c *fiber.Ctx) error {
+	from := c.Query("from")
+	to := c.Query("to")
+
+	if from == "" || to == "" {
+		return helpers.BadRequest(c, "from and to parameters are required(YYYY-MM-DD)")
+	}
+
+	if _, err := time.Parse("2006-01-02", from); err != nil {
+		return helpers.BadRequest(c, "Invalid from date format(YYYY-MM-DD)")
+	}
+
+	if _, err := time.Parse("2006-01-02", to); err != nil {
+		return helpers.BadRequest(c, "Invalid to date format(YYYY-MM-DD)")
+	}
+
+	res, err := h.reportUsecase.GetRevenueTrend(from, to)
+	if err != nil {
+		return helpers.InternalServerError(c, err.Error())
+	}
+
+	return helpers.Success(c, "Revenue trend retrieved successfully", res)
+}
+
 func (h *ReportHandler) GetMonthlyReport(c *fiber.Ctx) error {
 	period := c.Query("period")
 	if period == "" {

@@ -12,14 +12,17 @@ type CloseShiftRequest struct {
 }
 
 type ShiftResponse struct {
-	ID              string     `json:"id"`
-	CashierID       string     `json:"cashier_id"`
-	Status          string     `json:"status"`
-	OpeningBalance  int64      `json:"opening_balance"`
-	ClosingBalance  *int64     `json:"closing_balance,omitempty"`
-	ExpectedClosingBalance *int64 `json:"expected_closing_balance,omitempty"`
-	Variance        *int64     `json:"variance,omitempty"`
-	OpenedAt        time.Time  `json:"opened_at"`
-	ClosedAt        *time.Time `json:"closed_at,omitempty"`
+	ID                     string     `json:"id"`
+	CashierID              string     `json:"cashier_id"`
+	Status                 string     `json:"status"`
+	OpeningBalance         int64      `json:"opening_balance"`
+	ClosingBalance         *int64     `json:"closing_balance,omitempty"`
+	ExpectedClosingBalance *int64     `json:"expected_closing_balance,omitempty"`
+	Variance               *int64     `json:"variance,omitempty"`
+	CashIncome             *int64     `json:"cash_income,omitempty"`
+	DebitIncome            *int64     `json:"debit_income,omitempty"`
+	QrisIncome             *int64     `json:"qris_income,omitempty"`
+	OpenedAt               time.Time  `json:"opened_at"`
+	ClosedAt               *time.Time `json:"closed_at,omitempty"`
 }
 
