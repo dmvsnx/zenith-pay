@@ -8,6 +8,7 @@ import (
 	"github.com/savanyv/zenith-pay/internal/model"
 	"github.com/savanyv/zenith-pay/internal/repository"
 	"github.com/savanyv/zenith-pay/internal/utils"
+	"github.com/savanyv/zenith-pay/internal/utils/cloudinary"
 )
 
 type ProductUsecase interface {
@@ -19,14 +20,16 @@ type ProductUsecase interface {
 }
 
 type productUsecase struct {
-	productRepo repository.ProductRepository
-	categoryRepo repository.CategoryRepository
+	productRepo       repository.ProductRepository
+	categoryRepo      repository.CategoryRepository
+	cloudinaryService cloudinary.CloudinaryService
 }
 
-func NewProductUsecase(productRepo repository.ProductRepository, categoryRepo repository.CategoryRepository) ProductUsecase {
+func NewProductUsecase(productRepo repository.ProductRepository, categoryRepo repository.CategoryRepository, cloudinaryService cloudinary.CloudinaryService) ProductUsecase {
 	return &productUsecase{
-		productRepo: productRepo,
-		categoryRepo: categoryRepo,
+		productRepo:       productRepo,
+		categoryRepo:      categoryRepo,
+		cloudinaryService: cloudinaryService,
 	}
 }
 
@@ -60,6 +63,7 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 		Name:       req.Name,
 		Price:      req.Price,
 		Stock:      req.Stock,
+		Image:      req.Image,
 	}
 
 	if err := u.productRepo.Create(product); err != nil {
@@ -67,15 +71,16 @@ func (u *productUsecase) CreateProduct(req *dtos.ProductRequest) (*dtos.ProductR
 	}
 
 	res := &dtos.ProductResponse{
-		ID:         product.ID.String(),
-		CategoryID: product.CategoryID.String(),
+		ID:           product.ID.String(),
+		CategoryID:   product.CategoryID.String(),
 		CategoryName: category.Name,
-		SKU:        product.SKU,
-		Name:       product.Name,
-		Price:      product.Price,
-		Stock:      product.Stock,
-		CreatedAt:  product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:  product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		SKU:          product.SKU,
+		Name:         product.Name,
+		Price:        product.Price,
+		Stock:        product.Stock,
+		Image:        product.Image,
+		CreatedAt:    product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:    product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	return res, nil
@@ -88,15 +93,16 @@ func (u *productUsecase) GetProductByID(id string) (*dtos.ProductResponse, error
 	}
 
 	res := &dtos.ProductResponse{
-		ID:         product.ID.String(),
-		CategoryID: product.CategoryID.String(),
+		ID:           product.ID.String(),
+		CategoryID:   product.CategoryID.String(),
 		CategoryName: product.Category.Name,
-		SKU:        product.SKU,
-		Name:       product.Name,
-		Price:      product.Price,
-		Stock:      product.Stock,
-		CreatedAt:  product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:  product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		SKU:          product.SKU,
+		Name:         product.Name,
+		Price:        product.Price,
+		Stock:        product.Stock,
+		Image:        product.Image,
+		CreatedAt:    product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:    product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	return res, nil
@@ -112,15 +118,16 @@ func (u *productUsecase) ListProducts(page, limit int) ([]*dtos.ProductResponse,
 
 	for _, product := range products {
 		res = append(res, &dtos.ProductResponse{
-			ID:         product.ID.String(),
-			CategoryID: product.CategoryID.String(),
+			ID:           product.ID.String(),
+			CategoryID:   product.CategoryID.String(),
 			CategoryName: product.Category.Name,
-			SKU:        product.SKU,
-			Name:       product.Name,
-			Price:      product.Price,
-			Stock:      product.Stock,
-			CreatedAt:  product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:  product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			SKU:          product.SKU,
+			Name:         product.Name,
+			Price:        product.Price,
+			Stock:        product.Stock,
+			Image:        product.Image,
+			CreatedAt:    product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:    product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		})
 	}
 
@@ -158,6 +165,12 @@ func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest
 	if req.Stock != nil {
 		product.Stock = *req.Stock
 	}
+	if req.Image != nil {
+		if err := u.cloudinaryService.DeleteImage(product.Image); err != nil {
+			return nil, errors.New("failed to delete old image")
+		}
+		product.Image = *req.Image
+	}
 
 	if err := u.productRepo.Update(product); err != nil {
 		return nil, errors.New("failed to update product")
@@ -171,6 +184,7 @@ func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest
 		Name:         product.Name,
 		Price:        product.Price,
 		Stock:        product.Stock,
+		Image:        product.Image,
 		CreatedAt:    product.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:    product.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -179,13 +193,17 @@ func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest
 }
 
 func (u *productUsecase) DeleteProduct(id string) error {
-	_, err := u.productRepo.FindByID(id)
+	product, err := u.productRepo.FindByID(id)
 	if err != nil {
 		return errors.New("product not found")
 	}
 
 	if err := u.productRepo.Delete(id); err != nil {
 		return errors.New("failed to delete product")
+	}
+
+	if err := u.cloudinaryService.DeleteImage(product.Image); err != nil {
+		return errors.New("failed to delete product image")
 	}
 
 	return nil

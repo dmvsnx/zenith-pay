@@ -32,6 +32,7 @@ func NewServer(config *config.Config) *Server {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  10 * time.Second,
+		BodyLimit:    10 * 1024 * 1024,
 	})
 
 	return &Server{

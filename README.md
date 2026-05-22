@@ -86,8 +86,9 @@ internal/
    | `DB_PORT` | `5432` | Port database |
    | `DB_USER` | `postgres` | User database |
    | `DB_PASSWORD` | `root` | Password database |
-   | `DB_NAME` | `zenith-pay_db` | Nama database |
-   | `JWT_SECRET` | — | Secret key untuk JWT |
+    | `DB_NAME` | `zenith-pay_db` | Nama database |
+    | `CLOUDINARY_URL` | — | Cloudinary connection URL untuk upload image |
+    | `JWT_SECRET` | — | Secret key untuk JWT |
    | `ADMIN_USERNAME` | — | Username admin (development seed) |
    | `ADMIN_PASSWORD` | — | Password admin (development seed) |
    | `ADMIN_EMAIL` | — | Email admin (development seed) |
@@ -353,6 +354,7 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
     "name": "Nasi Goreng",
     "price": 15000,
     "stock": 50,
+    "image": "https://foodish-api.com/images/rice/rice15.jpg",
     "created_at": "2026-05-20T08:00:00Z",
     "updated_at": "2026-05-20T08:00:00Z"
   }
@@ -378,6 +380,7 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
     "name": "Nasi Goreng Spesial",
     "price": 18000,
     "stock": 50,
+    "image": "https://foodish-api.com/images/rice/rice15.jpg",
     "created_at": "2026-05-20T08:00:00Z",
     "updated_at": "2026-05-20T08:05:00Z"
   }
@@ -404,6 +407,7 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
       "name": "Nasi Goreng",
       "price": 15000,
       "stock": 50,
+      "image": "https://foodish-api.com/images/rice/rice15.jpg",
       "created_at": "2026-05-20T08:00:00Z",
       "updated_at": "2026-05-20T08:00:00Z"
     }
@@ -424,6 +428,7 @@ Semua endpoint diawali dengan prefix `/zenith-pay`. List endpoint mendukung pagi
     "name": "Nasi Goreng",
     "price": 15000,
     "stock": 50,
+    "image": "https://foodish-api.com/images/rice/rice15.jpg",
     "created_at": "2026-05-20T08:00:00Z",
     "updated_at": "2026-05-20T08:00:00Z"
   }

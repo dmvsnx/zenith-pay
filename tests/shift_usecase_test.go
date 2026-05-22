@@ -103,8 +103,8 @@ func TestShiftUsecase_CloseShift_Success(t *testing.T) {
 		},
 	}
 	transactionRepo := &mocks.TransactionRepo{
-		SumCashByShiftIDFn: func(shiftID string) (int64, error) {
-			return cashTotal, nil
+		SumByShiftIDGroupedFn: func(shiftID string) (int64, int64, int64, error) {
+			return cashTotal, 0, 0, nil
 		},
 	}
 	uc := usecase.NewShiftUsecase(repo, transactionRepo)
@@ -201,7 +201,12 @@ func TestShiftUsecase_GetActiveShift_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	uc := usecase.NewShiftUsecase(repo, &mocks.TransactionRepo{})
+	transactionRepo := &mocks.TransactionRepo{
+		SumByShiftIDGroupedFn: func(shiftID string) (int64, int64, int64, error) {
+			return 0, 0, 0, nil
+		},
+	}
+	uc := usecase.NewShiftUsecase(repo, transactionRepo)
 
 	res, err := uc.GetActiveShift(validCashierID)
 

@@ -1,33 +1,66 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	dtos "github.com/savanyv/zenith-pay/internal/dto"
 	"github.com/savanyv/zenith-pay/internal/usecase"
+	"github.com/savanyv/zenith-pay/internal/utils/cloudinary"
 	"github.com/savanyv/zenith-pay/internal/utils/helpers"
 )
 
 type ProductHandler struct {
-	productUsecase usecase.ProductUsecase
-	validator *helpers.CustomValidator
+	productUsecase    usecase.ProductUsecase
+	cloudinaryService cloudinary.CloudinaryService
+	validator         *helpers.CustomValidator
 }
 
-func NewProductHandler(productUsecase usecase.ProductUsecase) *ProductHandler {
+func NewProductHandler(productUsecase usecase.ProductUsecase, cloudinaryService cloudinary.CloudinaryService) *ProductHandler {
 	return &ProductHandler{
-		productUsecase: productUsecase,
-		validator:      helpers.NewCustomValidtor(),
+		productUsecase:    productUsecase,
+		cloudinaryService: cloudinaryService,
+		validator:         helpers.NewCustomValidtor(),
 	}
 }
 
 func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
-	var req dtos.ProductRequest
-	if err := c.BodyParser(&req); err != nil {
-		return helpers.BadRequest(c, "Invalid request body")
+	form, err := c.MultipartForm()
+	if err != nil {
+		return helpers.BadRequest(c, "Invalid multipart form data")
+	}
+
+	price, err := strconv.ParseInt(c.FormValue("price"), 10, 64)
+	if err != nil {
+		return helpers.BadRequest(c, "Invalid price")
+	}
+
+	stock, err := strconv.Atoi(c.FormValue("stock"))
+	if err != nil {
+		return helpers.BadRequest(c, "Invalid stock")
+	}
+
+	req := dtos.ProductRequest{
+		CategoryID: c.FormValue("category_id"),
+		Name:       c.FormValue("name"),
+		Price:      price,
+		Stock:      stock,
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
 		return helpers.BadRequest(c, err.Error())
 	}
+
+	fileHeaders := form.File["image"]
+	if len(fileHeaders) == 0 {
+		return helpers.BadRequest(c, "Image is required")
+	}
+
+	imageURL, err := h.cloudinaryService.UploadImage(fileHeaders[0])
+	if err != nil {
+		return helpers.InternalServerError(c, "Failed to upload image")
+	}
+	req.Image = imageURL
 
 	res, err := h.productUsecase.CreateProduct(&req)
 	if err != nil {
@@ -64,13 +97,46 @@ func (h *ProductHandler) ListProduct(c *fiber.Ctx) error {
 
 func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
-	var req dtos.ProductUpdateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return helpers.BadRequest(c, "Invalid request body")
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		return helpers.BadRequest(c, "Invalid multipart form data")
+	}
+
+	req := dtos.ProductUpdateRequest{}
+
+	if v := c.FormValue("category_id"); v != "" {
+		req.CategoryID = &v
+	}
+	if v := c.FormValue("name"); v != "" {
+		req.Name = &v
+	}
+	if v := c.FormValue("price"); v != "" {
+		price, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return helpers.BadRequest(c, "Invalid price")
+		}
+		req.Price = &price
+	}
+	if v := c.FormValue("stock"); v != "" {
+		stock, err := strconv.Atoi(v)
+		if err != nil {
+			return helpers.BadRequest(c, "Invalid stock")
+		}
+		req.Stock = &stock
 	}
 
 	if err := h.validator.Validate(&req); err != nil {
 		return helpers.BadRequest(c, err.Error())
+	}
+
+	fileHeaders := form.File["image"]
+	if len(fileHeaders) > 0 {
+		imageURL, err := h.cloudinaryService.UploadImage(fileHeaders[0])
+		if err != nil {
+			return helpers.InternalServerError(c, "Failed to upload image")
+		}
+		req.Image = &imageURL
 	}
 
 	res, err := h.productUsecase.UpdateProduct(id, &req)

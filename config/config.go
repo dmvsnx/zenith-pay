@@ -18,6 +18,8 @@ type Config struct {
 	DBPassword string
 	DBName     string
 
+	CloudinaryURL string
+
 	JwtSecretKey string
 }
 
@@ -35,6 +37,8 @@ func LoadConfig() *Config {
 		DBUser:     loadEnv("DB_USER"),
 		DBPassword: loadEnv("DB_PASSWORD"),
 		DBName:     loadEnv("DB_NAME"),
+
+		CloudinaryURL: loadEnv("CLOUDINARY_URL"),
 		
 		JwtSecretKey: loadEnv("JWT_SECRET"),
 	}
