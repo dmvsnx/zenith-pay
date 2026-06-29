@@ -18,7 +18,10 @@ type Config struct {
 	DBPassword string
 	DBName     string
 
-	CloudinaryURL string
+	MinioEndpoint string
+	MinioAccessKey string
+	MinioSecretKey string
+	MinioBucket string
 
 	JwtSecretKey string
 }
@@ -38,8 +41,11 @@ func LoadConfig() *Config {
 		DBPassword: loadEnv("DB_PASSWORD"),
 		DBName:     loadEnv("DB_NAME"),
 
-		CloudinaryURL: loadEnv("CLOUDINARY_URL"),
-		
+		MinioEndpoint:  loadEnv("MINIO_ENDPOINT"),
+		MinioAccessKey: loadEnv("MINIO_ACCESS_KEY"),
+		MinioSecretKey: loadEnv("MINIO_SECRET_KEY"),
+		MinioBucket:    loadEnv("MINIO_BUCKET"),
+
 		JwtSecretKey: loadEnv("JWT_SECRET"),
 	}
 }

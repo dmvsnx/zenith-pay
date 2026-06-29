@@ -13,10 +13,10 @@ import (
 	"mime/multipart"
 )
 
-func newCloudinaryMock() *mocks.CloudinaryService {
-	return &mocks.CloudinaryService{
+func newMinioMock() *mocks.MinioService {
+	return &mocks.MinioService{
 		UploadImageFn: func(fileHeader *multipart.FileHeader) (string, error) {
-			return "https://res.cloudinary.com/test/image/upload/v1/test.jpg", nil
+			return "http://localhost:9000/zenith-pay-bucket/test.jpg", nil
 		},
 		DeleteImageFn: func(imageURL string) error {
 			return nil
@@ -43,7 +43,7 @@ func TestProductUsecase_CreateProduct_Success(t *testing.T) {
 			return &model.Category{ID: catID, Name: "Food"}, nil
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	res, err := uc.CreateProduct(&dtos.ProductRequest{
 		CategoryID: catID.String(),
@@ -65,7 +65,7 @@ func TestProductUsecase_CreateProduct_Success(t *testing.T) {
 }
 
 func TestProductUsecase_CreateProduct_InvalidCategoryID(t *testing.T) {
-	uc := usecase.NewProductUsecase(&mocks.ProductRepo{}, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(&mocks.ProductRepo{}, &mocks.CategoryRepo{}, newMinioMock())
 
 	_, err := uc.CreateProduct(&dtos.ProductRequest{
 		CategoryID: "not-a-uuid",
@@ -80,7 +80,7 @@ func TestProductUsecase_CreateProduct_InvalidCategoryID(t *testing.T) {
 }
 
 func TestProductUsecase_CreateProduct_NilCategoryID(t *testing.T) {
-	uc := usecase.NewProductUsecase(&mocks.ProductRepo{}, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(&mocks.ProductRepo{}, &mocks.CategoryRepo{}, newMinioMock())
 
 	_, err := uc.CreateProduct(&dtos.ProductRequest{
 		CategoryID: uuid.Nil.String(),
@@ -100,7 +100,7 @@ func TestProductUsecase_CreateProduct_NameExists(t *testing.T) {
 			return &model.Product{Name: name}, nil
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	_, err := uc.CreateProduct(&dtos.ProductRequest{
 		CategoryID: "00000000-0000-0000-0000-000000000010",
@@ -126,7 +126,7 @@ func TestProductUsecase_CreateProduct_CategoryNotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	_, err := uc.CreateProduct(&dtos.ProductRequest{
 		CategoryID: catID.String(),
@@ -155,7 +155,7 @@ func TestProductUsecase_CreateProduct_FailCreate(t *testing.T) {
 			return &model.Category{ID: catID, Name: "Food"}, nil
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	_, err := uc.CreateProduct(&dtos.ProductRequest{
 		CategoryID: catID.String(),
@@ -189,7 +189,7 @@ func TestProductUsecase_GetProductByID_Success(t *testing.T) {
 	}
 	categoryRepo := &mocks.CategoryRepo{}
 
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	res, err := uc.GetProductByID("00000000-0000-0000-0000-000000000011")
 
@@ -207,7 +207,7 @@ func TestProductUsecase_GetProductByID_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	_, err := uc.GetProductByID("00000000-0000-0000-0000-000000000011")
 
@@ -229,7 +229,7 @@ func TestProductUsecase_ListProducts_Success(t *testing.T) {
 	}
 	categoryRepo := &mocks.CategoryRepo{}
 
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	res, total, err := uc.ListProducts(1, 10)
 
@@ -250,7 +250,7 @@ func TestProductUsecase_ListProducts_FailFetch(t *testing.T) {
 			return nil, 0, errors.New("db error")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	_, _, err := uc.ListProducts(1, 10)
 
@@ -281,7 +281,7 @@ func TestProductUsecase_UpdateProduct_Success(t *testing.T) {
 	}
 	categoryRepo := &mocks.CategoryRepo{}
 
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	newName := "Cheese Burger"
 	newPrice := int64(30000)
@@ -307,7 +307,7 @@ func TestProductUsecase_UpdateProduct_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	newName := "Cheese Burger"
 	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
@@ -329,7 +329,7 @@ func TestProductUsecase_UpdateProduct_InvalidCategoryID(t *testing.T) {
 			}, nil
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	badID := "not-a-uuid"
 	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
@@ -356,7 +356,7 @@ func TestProductUsecase_UpdateProduct_CategoryNotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	newCatID := "00000000-0000-0000-0000-000000000099"
 	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
@@ -387,7 +387,7 @@ func TestProductUsecase_UpdateProduct_FailUpdate(t *testing.T) {
 			return &model.Category{ID: catID, Name: "Food"}, nil
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, newMinioMock())
 
 	newName := "Cheese Burger"
 	_, err := uc.UpdateProduct("00000000-0000-0000-0000-000000000011", &dtos.ProductUpdateRequest{
@@ -411,7 +411,7 @@ func TestProductUsecase_DeleteProduct_Success(t *testing.T) {
 			return nil
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	err := uc.DeleteProduct("00000000-0000-0000-0000-000000000011")
 
@@ -426,7 +426,7 @@ func TestProductUsecase_DeleteProduct_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	err := uc.DeleteProduct("00000000-0000-0000-0000-000000000011")
 
@@ -447,7 +447,7 @@ func TestProductUsecase_DeleteProduct_FailDelete(t *testing.T) {
 			return errors.New("db error")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newCloudinaryMock())
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, newMinioMock())
 
 	err := uc.DeleteProduct("00000000-0000-0000-0000-000000000011")
 
@@ -479,9 +479,9 @@ func TestProductUsecase_UpdateProduct_WithImage(t *testing.T) {
 		},
 	}
 	categoryRepo := &mocks.CategoryRepo{}
-	cloudinaryMock := &mocks.CloudinaryService{
+	minioMock := &mocks.MinioService{
 		UploadImageFn: func(fileHeader *multipart.FileHeader) (string, error) {
-			return "https://res.cloudinary.com/test/image/upload/v1/new.jpg", nil
+			return "http://localhost:9000/zenith-pay-bucket/new.jpg", nil
 		},
 		DeleteImageFn: func(imageURL string) error {
 			deleteCalled = true
@@ -489,7 +489,7 @@ func TestProductUsecase_UpdateProduct_WithImage(t *testing.T) {
 		},
 	}
 
-	uc := usecase.NewProductUsecase(productRepo, categoryRepo, cloudinaryMock)
+	uc := usecase.NewProductUsecase(productRepo, categoryRepo, minioMock)
 
 	newName := "Cheese Burger"
 	newImage := "https://res.cloudinary.com/test/image/upload/v1/new.jpg"
@@ -521,15 +521,15 @@ func TestProductUsecase_DeleteProduct_ImageDeleteError(t *testing.T) {
 			return nil
 		},
 	}
-	cloudinaryMock := &mocks.CloudinaryService{
+	minioMock := &mocks.MinioService{
 		UploadImageFn: func(fileHeader *multipart.FileHeader) (string, error) {
 			return "", nil
 		},
 		DeleteImageFn: func(imageURL string) error {
-			return errors.New("cloudinary delete error")
+			return errors.New("minio delete error")
 		},
 	}
-	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, cloudinaryMock)
+	uc := usecase.NewProductUsecase(productRepo, &mocks.CategoryRepo{}, minioMock)
 
 	err := uc.DeleteProduct("00000000-0000-0000-0000-000000000011")
 

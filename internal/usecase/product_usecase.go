@@ -7,8 +7,8 @@ import (
 	dtos "github.com/savanyv/zenith-pay/internal/dto"
 	"github.com/savanyv/zenith-pay/internal/model"
 	"github.com/savanyv/zenith-pay/internal/repository"
+	"github.com/savanyv/zenith-pay/internal/storage/minio"
 	"github.com/savanyv/zenith-pay/internal/utils"
-	"github.com/savanyv/zenith-pay/internal/utils/cloudinary"
 )
 
 type ProductUsecase interface {
@@ -20,16 +20,16 @@ type ProductUsecase interface {
 }
 
 type productUsecase struct {
-	productRepo       repository.ProductRepository
-	categoryRepo      repository.CategoryRepository
-	cloudinaryService cloudinary.CloudinaryService
+	productRepo  repository.ProductRepository
+	categoryRepo repository.CategoryRepository
+	minioService minio.Service
 }
 
-func NewProductUsecase(productRepo repository.ProductRepository, categoryRepo repository.CategoryRepository, cloudinaryService cloudinary.CloudinaryService) ProductUsecase {
+func NewProductUsecase(productRepo repository.ProductRepository, categoryRepo repository.CategoryRepository, minioService minio.Service) ProductUsecase {
 	return &productUsecase{
-		productRepo:       productRepo,
-		categoryRepo:      categoryRepo,
-		cloudinaryService: cloudinaryService,
+		productRepo:  productRepo,
+		categoryRepo: categoryRepo,
+		minioService: minioService,
 	}
 }
 
@@ -166,7 +166,7 @@ func (u *productUsecase) UpdateProduct(id string, req *dtos.ProductUpdateRequest
 		product.Stock = *req.Stock
 	}
 	if req.Image != nil {
-		if err := u.cloudinaryService.DeleteImage(product.Image); err != nil {
+		if err := u.minioService.DeleteImage(product.Image); err != nil {
 			return nil, errors.New("failed to delete old image")
 		}
 		product.Image = *req.Image
@@ -202,7 +202,7 @@ func (u *productUsecase) DeleteProduct(id string) error {
 		return errors.New("failed to delete product")
 	}
 
-	if err := u.cloudinaryService.DeleteImage(product.Image); err != nil {
+	if err := u.minioService.DeleteImage(product.Image); err != nil {
 		return errors.New("failed to delete product image")
 	}
 

@@ -5,22 +5,22 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	dtos "github.com/savanyv/zenith-pay/internal/dto"
+	"github.com/savanyv/zenith-pay/internal/storage/minio"
 	"github.com/savanyv/zenith-pay/internal/usecase"
-	"github.com/savanyv/zenith-pay/internal/utils/cloudinary"
 	"github.com/savanyv/zenith-pay/internal/utils/helpers"
 )
 
 type ProductHandler struct {
-	productUsecase    usecase.ProductUsecase
-	cloudinaryService cloudinary.CloudinaryService
-	validator         *helpers.CustomValidator
+	productUsecase usecase.ProductUsecase
+	minioService   minio.Service
+	validator      *helpers.CustomValidator
 }
 
-func NewProductHandler(productUsecase usecase.ProductUsecase, cloudinaryService cloudinary.CloudinaryService) *ProductHandler {
+func NewProductHandler(productUsecase usecase.ProductUsecase, minioService minio.Service) *ProductHandler {
 	return &ProductHandler{
-		productUsecase:    productUsecase,
-		cloudinaryService: cloudinaryService,
-		validator:         helpers.NewCustomValidtor(),
+		productUsecase: productUsecase,
+		minioService:   minioService,
+		validator:      helpers.NewCustomValidtor(),
 	}
 }
 
@@ -56,7 +56,7 @@ func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 		return helpers.BadRequest(c, "Image is required")
 	}
 
-	imageURL, err := h.cloudinaryService.UploadImage(fileHeaders[0])
+	imageURL, err := h.minioService.UploadImage(fileHeaders[0])
 	if err != nil {
 		return helpers.InternalServerError(c, "Failed to upload image")
 	}
@@ -132,7 +132,7 @@ func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 
 	fileHeaders := form.File["image"]
 	if len(fileHeaders) > 0 {
-		imageURL, err := h.cloudinaryService.UploadImage(fileHeaders[0])
+		imageURL, err := h.minioService.UploadImage(fileHeaders[0])
 		if err != nil {
 			return helpers.InternalServerError(c, "Failed to upload image")
 		}
